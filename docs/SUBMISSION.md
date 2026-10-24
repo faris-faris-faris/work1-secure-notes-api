@@ -9,8 +9,8 @@ variant was assigned, so the variant field is "—".
 | Item | Value |
 |---|---|
 | Public repository | <https://github.com/faris-faris-faris/work1-secure-notes-api> |
-| Last successful pipeline run | <https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40103379944> |
-| Commit of that run | `154b639` |
+| Last successful pipeline run | <https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40104034585> |
+| Commit of that run | `b0c8e9b` |
 | Jobs | `test` (Node 22), `test` (Node 24), `lint`, `sast`, `sca` — all **success** |
 | Raw run record | [`docs/evidence/github-actions-run.txt`](evidence/github-actions-run.txt) |
 
@@ -32,8 +32,9 @@ advisories. They were fixed in commit `154b639`:
 * `zod` 3.25 → 4.6.7
 * `overrides: { "body-parser": "2.4.0" }`
 
-`npm audit` now reports 0 vulnerabilities, the 52 tests pass, and the second run
-`40103379944` is green on every job.
+`npm audit` now reports 0 vulnerabilities and the 52 tests pass. That commit's
+run (`40103379944`) was green on every job, and so is the later documentation
+commit `b0c8e9b` (run `40104034585`), which is the run linked above.
 
 ## CI evidence
 
@@ -44,7 +45,7 @@ labelled as a local run in the README and in both reports.
 The GitHub run is evidenced by its public run URL and by
 `docs/evidence/github-actions-run.txt`, which contains the API response captured
 after the run: workflow conclusions and the per-job conclusion for
-`40103379944`.
+`40104034585`.
 
 ## Rebuilding the PDFs
 

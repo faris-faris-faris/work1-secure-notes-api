@@ -89,8 +89,8 @@ docs/           中英文报告（md/html/pdf）、证据记录、截图、提�
 
 报告封面已填写姓名 **Wu ZiYang** 与 HDU 学号 **23320121**；变体号未分配（—）。
 仓库已公开，最近一次成功流水线：
-<https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40103379944>
-（提交 `154b639`，test/lint/sast/sca 全部通过）。
+<https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40104034585>
+（提交 `b0c8e9b`，test/lint/sast/sca 全部通过）。
 
 ## 参考
 
