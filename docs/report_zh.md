@@ -31,9 +31,9 @@
 |---|---|
 | 操作系统 | Windows 11 (26300)；CI 运行于 `ubuntu-latest` |
 | 运行时 | Node.js 24.16（CI 矩阵：Node 22 与 24） |
-| Web 框架 | Express 5.1 |
+| Web 框架 | Express 5.3 |
 | 数据库 | SQLite（Node 内置 `node:sqlite` 模块） |
-| 参数校验 | Zod 3.25 |
+| 参数校验 | Zod 4.6 |
 | 认证 | scrypt（N=2¹⁵）+ HS256 JWT（`jsonwebtoken` 9.0）+ 轮换刷新令牌 |
 | 测试 | `node:test` + `supertest`，共 52 个用例 |
 | SAST | ESLint 9 + `eslint-plugin-security` |
@@ -312,7 +312,7 @@ RESULT: all 4 jobs passed
 
 ![SCA 报告](screenshots/sca-osv.png)
 
-*图 5 — SCA 报告：190 个锁定依赖，无已知漏洞。*
+*图 5 — SCA 报告：187 个锁定依赖，无已知漏洞。*
 
 > **关于流水线链接。** 上述截图是在本机执行 `ci.yml` 中完全相同命令的真实结果；
 > 仓库尚未从这台机器推送，因此暂时没有 Actions 运行链接。首次推送后，同样的四个

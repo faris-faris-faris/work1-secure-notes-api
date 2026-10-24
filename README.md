@@ -15,10 +15,10 @@ pipeline with SAST and SCA, and a complete study of **CVE-2022-22965
 
 | Item | Value |
 |---|---|
-| Runtime | Node.js 22+ (CI matrix: 22 and 24), Express 5.1 |
+| Runtime | Node.js 22+ (CI matrix: 22 and 24), Express 5.3 |
 | Database | SQLite through the built-in `node:sqlite` module |
 | Authentication | scrypt password hashing + HS256 JWT + rotating refresh tokens |
-| Validation | Zod 3.25, strict schemas |
+| Validation | Zod 4.6, strict schemas |
 | Tests | 52 `node:test` cases through `supertest` |
 | SAST | ESLint 9 + `eslint-plugin-security` |
 | SCA | `npm audit` in CI; OSV.dev through `scripts/sca-osv.mjs` |
@@ -172,7 +172,7 @@ check directly against SQLite that the original text is still stored.
 
 ![SCA report](docs/screenshots/sca-osv.png)
 
-*Figure 4 — SCA: no known vulnerabilities in 190 locked packages.*
+*Figure 4 — SCA: no known vulnerabilities in 187 locked packages.*
 
 ![Local CI run](docs/screenshots/ci-local.png)
 

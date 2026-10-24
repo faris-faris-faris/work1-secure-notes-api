@@ -33,9 +33,9 @@
 |---|---|
 | OS | Windows 11 (26300); CI runs on `ubuntu-latest` |
 | Runtime | Node.js 24.16 (CI matrix: Node 22 and 24) |
-| Framework | Express 5.1 |
+| Framework | Express 5.3 |
 | Database | SQLite via the built-in `node:sqlite` module |
-| Validation | Zod 3.25 |
+| Validation | Zod 4.6 |
 | Auth | scrypt (N=2¹⁵) + HS256 JWT (`jsonwebtoken` 9.0) + rotating refresh tokens |
 | Tests | `node:test` + `supertest`, 52 cases |
 | SAST | ESLint 9 + `eslint-plugin-security` |
@@ -327,7 +327,7 @@ RESULT: all 4 jobs passed
 
 ![SCA](screenshots/sca-osv.png)
 
-*Figure 5 — SCA report: 190 locked packages, no known vulnerabilities.*
+*Figure 5 — SCA report: 187 locked packages, no known vulnerabilities.*
 
 > **On the pipeline link.** The screenshots above are a local run of the exact
 > commands in `ci.yml`; the repository has not been pushed from this machine, so
