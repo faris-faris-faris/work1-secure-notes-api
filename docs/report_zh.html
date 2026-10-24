@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>实验一 安全 REST API 开发、CI/CD 与真实 CVE 漏洞分析</title>
+<style>
+:root { color-scheme: light; }
+@page { size: A4; margin: 16mm 14mm 18mm 14mm; }
+* { box-sizing: border-box; }
+body {
+  font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", system-ui, sans-serif;
+  font-size: 10.5pt; line-height: 1.62; color: #1b1b1b; margin: 0 auto; max-width: 190mm;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+h1 { font-size: 1.65em; line-height: 1.3; margin: 0 0 .6em; padding-bottom: .3em; border-bottom: 2px solid #2c4a7c; }
+h1 + h1, h1:not(:first-of-type) { page-break-before: always; }
+/* The first blockquote in the reports carries the lab metadata: render it as a
+   cover page instead of a quotation, and start the body on a new page. */
+body > h1:first-of-type { font-size: 1.9em; margin: 1.5em 0 .9em; }
+body > blockquote:first-of-type {
+  border-left: none; background: none; padding: 0; margin: 0 0 1.2em;
+  font-size: 1.02em; line-height: 2.0; page-break-after: always;
+}
+body > blockquote:first-of-type strong { display: inline-block; min-width: 9em; }
+h2 { font-size: 1.22em; margin: 1.5em 0 .5em; padding-bottom: .18em; border-bottom: 1px solid #dde3ea; page-break-after: avoid; }
+h3 { font-size: 1.05em; margin: 1.2em 0 .4em; page-break-after: avoid; }
+h4 { font-size: 1em; margin: 1em 0 .3em; page-break-after: avoid; }
+p { margin: .55em 0; }
+ul, ol { margin: .5em 0 .5em 1.4em; padding: 0; }
+li { margin: .22em 0; }
+li > ul, li > ol { margin: .2em 0 .2em 1.1em; }
+a { color: #1a4d8f; text-decoration: none; word-break: break-word; }
+code {
+  font-family: Consolas, "Cascadia Mono", "SFMono-Regular", monospace; font-size: .9em;
+  background: #f2f4f7; padding: .08em .32em; border-radius: 3px; color: #1f2933;
+}
+pre {
+  background: #f8f9fb; border: 1px solid #e2e6ec; border-left: 4px solid #4a6fa5;
+  padding: 8px 11px; overflow-x: auto; page-break-inside: avoid; margin: .7em 0;
+  font-size: .86em; line-height: 1.5; white-space: pre-wrap; word-break: break-word;
+}
+pre code { background: none; padding: 0; font-size: 1em; }
+table { border-collapse: collapse; width: 100%; margin: .8em 0; font-size: .93em; page-break-inside: avoid; }
+th, td { border: 1px solid #d3dae2; padding: 4px 7px; vertical-align: top; text-align: left; }
+th { background: #eef2f7; font-weight: 600; }
+tbody tr:nth-child(even) { background: #fbfcfd; }
+blockquote {
+  margin: .8em 0; padding: .55em .9em; background: #f6f9fc;
+  border-left: 4px solid #9db4d0; color: #2b323b;
+}
+blockquote p { margin: .18em 0; }
+img { max-width: 100%; max-height: 196mm; height: auto; object-fit: contain; display: block; margin: 10px auto 4px; page-break-inside: avoid; }
+p:has(img) { page-break-inside: avoid; }
+hr { border: none; border-top: 1px solid #dde3ea; margin: 1.4em 0; }
+.missing {
+  border: 1px dashed #c0392b; color: #a53224; background: #fdf6f5;
+  padding: 10px 12px; margin: 8px 0; font-size: .9em; border-radius: 4px;
+}
+.missing code { background: #fff; }
+.task { font-family: Consolas, monospace; }
+@media print { body { max-width: none; } }
+</style>
+</head>
+<body>
+<h1>实验一 安全 REST API 开发、CI/CD 与真实 CVE 漏洞分析</h1>
+<blockquote>
+<p><strong>实验编号</strong>：1<br>
+<strong>实验名称</strong>：Secure REST API Development with CI/CD and Real CVE Vulnerability Analysis<br>
+<strong>变体号</strong>：—<br>
+<strong>姓</strong>：Wu<br>
+<strong>名</strong>：ZiYang<br>
+<strong>HDU 学号</strong>：23320121<br>
+<strong>日期</strong>：2026-10-20<br>
+<strong>代码仓库</strong>：<code>https://github.com/faris-faris-faris/work1-secure-notes-api</code><br>
+<strong>流水线</strong>：<code>https://github.com/faris-faris-faris/work1-secure-notes-api/actions</code></p>
+</blockquote>
+<hr>
+<h2>1. 实验目的</h2>
+<ol>
+<li>从零构建一个满足 OWASP Top 10 防护要求的 REST API：参数化 SQL、输出编码、
+   密码哈希、JWT 校验与对象级权限检查，并且<strong>用测试而不是口头声明</strong>证明每一项防护有效。</li>
+<li>把 SAST 与 SCA 接入 CI/CD，使每次 push 和 pull request 自动接受检查，并展示
+   工具本身的输出。</li>
+<li>在受控的 Vulhub 环境中复现一个真实 CVE，解释漏洞存在的根本原因，完成修补，
+   并证明攻击在修补后不再成功。</li>
+<li>以工程化形式呈现结果：可复现的命令、可对比的“修复前/修复后”证据，以及
+   <strong>基于行为而非状态码</strong>的修复验证。</li>
+</ol>
+<hr>
+<h2>2. 实验环境</h2>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>版本 / 说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作系统</td>
+<td>Windows 11 (26300)；CI 运行于 <code>ubuntu-latest</code></td>
+</tr>
+<tr>
+<td>运行时</td>
+<td>Node.js 24.16（CI 矩阵：Node 22 与 24）</td>
+</tr>
+<tr>
+<td>Web 框架</td>
+<td>Express 5.1</td>
+</tr>
+<tr>
+<td>数据库</td>
+<td>SQLite（Node 内置 <code>node:sqlite</code> 模块）</td>
+</tr>
+<tr>
+<td>参数校验</td>
+<td>Zod 3.25</td>
+</tr>
+<tr>
+<td>认证</td>
+<td>scrypt（N=2¹⁵）+ HS256 JWT（<code>jsonwebtoken</code> 9.0）+ 轮换刷新令牌</td>
+</tr>
+<tr>
+<td>测试</td>
+<td><code>node:test</code> + <code>supertest</code>，共 52 个用例</td>
+</tr>
+<tr>
+<td>SAST</td>
+<td>ESLint 9 + <code>eslint-plugin-security</code></td>
+</tr>
+<tr>
+<td>SCA</td>
+<td><code>npm audit</code>（CI）/ OSV.dev（<code>scripts/sca-osv.mjs</code>）</td>
+</tr>
+<tr>
+<td>容器</td>
+<td>Docker Desktop 29.8 + Docker Compose v2</td>
+</tr>
+<tr>
+<td>CVE 靶场</td>
+<td>Vulhub <code>spring/CVE-2022-22965</code>（Spring 5.3.17 → 5.3.18）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>为什么选择 Node.js 而不是 Flask。</strong> 本课程此前的实验使用 Python/Flask 实现，
+本次改用 Node.js + Express，是为了得到一份真正不同的实现，而不是把旧代码重新敲一遍。
+同时它也覆盖了一组不同的失败模式：JavaScript 的原型与 JSON 处理、<code>ORDER BY</code>
+无法用占位符参数化、以及使用标准库 scrypt 而非 bcrypt 做口令哈希；作业要求的所有
+安全点仍然全部覆盖。</p>
+<hr>
+<h2>3. 第一部分：安全 REST API</h2>
+<h3>3.1 技术栈与初始化</h3>
+<pre><code class="language-bash">mkdir work1-secure-notes-api &amp;&amp; cd work1-secure-notes-api
+npm init -y
+npm install express@5 jsonwebtoken zod
+npm install -D eslint eslint-plugin-security supertest
+git init &amp;&amp; git add . &amp;&amp; git commit -m &quot;feat: secure notes API skeleton&quot;
+git remote add origin https://github.com/faris-faris-faris/work1-secure-notes-api.git
+git push -u origin main
+</code></pre>
+<pre><code>src/
+├── app.js              应用工厂：安全响应头、JSON 体积限制、统一错误处理
+├── server.js           进程入口、优雅退出
+├── config.js           环境变量配置与生产环境启动检查
+├── db.js               建表语句与全部 SQL
+├── security.js         scrypt、JWT、输出编码、登录限速
+├── validation.js       每个请求的 Zod 校验模式
+├── errors.js           面向客户端的统一错误类型
+├── middleware/auth.js  JWT 校验中间件、归属判定
+└── routes/             auth.js、notes.js
+tests/                  52 个测试
+cve/                    漏洞环境、利用脚本、补丁与验证
+.github/workflows/ci.yml
+</code></pre>
+<p>业务场景是“校园公告板”：登录用户可以浏览公告，只有作者或管理员可以修改、删除。
+选择这个场景是为了让<strong>对象级权限（A01）</strong>成为业务的一部分，而不只是附加检查。</p>
+<h3>3.2 API 设计</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>方法</th>
+<th>路径</th>
+<th>认证</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>POST</td>
+<td><code>/auth/login</code></td>
+<td>—</td>
+<td>接收 <code>login</code> / <code>password</code>，返回访问令牌与刷新令牌</td>
+</tr>
+<tr>
+<td>2</td>
+<td>GET</td>
+<td><code>/api/data</code></td>
+<td>Bearer</td>
+<td>公告列表（<code>limit</code>、<code>offset</code>、<code>q</code>、<code>category</code>、<code>sort</code>）</td>
+</tr>
+<tr>
+<td>3</td>
+<td>POST</td>
+<td><code>/api/notes</code></td>
+<td>Bearer</td>
+<td><strong>自选方法</strong>：发布公告</td>
+</tr>
+<tr>
+<td>+</td>
+<td>GET</td>
+<td><code>/api/notes/:id</code></td>
+<td>Bearer</td>
+<td>读取单条公告</td>
+</tr>
+<tr>
+<td>+</td>
+<td>PATCH</td>
+<td><code>/api/notes/:id</code></td>
+<td>Bearer</td>
+<td>修改（仅作者或管理员）</td>
+</tr>
+<tr>
+<td>+</td>
+<td>DELETE</td>
+<td><code>/api/notes/:id</code></td>
+<td>Bearer</td>
+<td>删除（仅作者或管理员）</td>
+</tr>
+<tr>
+<td>+</td>
+<td>POST</td>
+<td><code>/auth/refresh</code></td>
+<td>—</td>
+<td>轮换刷新令牌并签发新的访问令牌</td>
+</tr>
+<tr>
+<td>+</td>
+<td>POST</td>
+<td><code>/auth/logout</code></td>
+<td>—</td>
+<td>吊销刷新令牌</td>
+</tr>
+<tr>
+<td>+</td>
+<td>GET</td>
+<td><code>/api/me</code></td>
+<td>Bearer</td>
+<td>当前身份与令牌元数据</td>
+</tr>
+<tr>
+<td>+</td>
+<td>GET</td>
+<td><code>/health</code></td>
+<td>—</td>
+<td>存活探测</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-bash">curl -s -X POST http://127.0.0.1:3000/auth/login \
+     -H 'Content-Type: application/json' \
+     -d '{&quot;login&quot;:&quot;alice&quot;,&quot;password&quot;:&quot;Passw0rd!Alice&quot;}'
+</code></pre>
+<pre><code class="language-json">{
+  &quot;access_token&quot;: &quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&quot;,
+  &quot;token_type&quot;: &quot;Bearer&quot;,
+  &quot;expires_in&quot;: 900,
+  &quot;refresh_token&quot;: &quot;8Kx…&quot;,
+  &quot;user&quot;: {&quot;id&quot;: 1, &quot;login&quot;: &quot;alice&quot;, &quot;display_name&quot;: &quot;Alice (course admin)&quot;, &quot;role&quot;: &quot;admin&quot;}
+}
+</code></pre>
+<p>不带令牌访问受保护接口：</p>
+<pre><code class="language-http">HTTP/1.1 401 Unauthorized
+WWW-Authenticate: Bearer error=&quot;missing_token&quot;
+Content-Type: application/json; charset=utf-8
+
+{&quot;error&quot;:{&quot;code&quot;:&quot;missing_token&quot;,&quot;message&quot;:&quot;Missing or malformed Authorization header (expected \&quot;Bearer &lt;token&gt;\&quot;).&quot;}}
+</code></pre>
+<p><strong>实测流程</strong>（<code>scripts/run-demo.ps1</code>，16 项检查全部 <code>PASS</code>）：</p>
+<table>
+<thead>
+<tr>
+<th>步骤</th>
+<th>请求</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>GET /health</code></td>
+<td>200</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>POST /auth/login</code>（错误口令）</td>
+<td>401</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>POST /auth/login</code>（alice）</td>
+<td>200，返回 JWT 与刷新令牌，<code>expires_in=900</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>无令牌 <code>GET /api/data</code></td>
+<td><strong>401 <code>missing_token</code></strong></td>
+</tr>
+<tr>
+<td>5</td>
+<td>伪造令牌 <code>GET /api/data</code></td>
+<td><strong>401 <code>invalid_token</code></strong></td>
+</tr>
+<tr>
+<td>6</td>
+<td>正常令牌 <code>GET /api/data</code></td>
+<td>200，<code>total=3</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>POST /api/notes</code></td>
+<td><strong>201</strong>，<code>Location: /api/notes/4</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td>以 <code>bob</code> 身份 <code>PATCH</code> 该公告</td>
+<td><strong>403 forbidden</strong></td>
+</tr>
+<tr>
+<td>9</td>
+<td>用 <code>alice' OR '1'='1</code> 登录</td>
+<td><strong>401</strong></td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>GET /api/data?q=' OR 1=1 --</code></td>
+<td>200，<code>total=0</code>（按字面量处理）</td>
+</tr>
+<tr>
+<td>11</td>
+<td>存储 <code>&lt;script&gt;alert("XSS")&lt;/script&gt;</code></td>
+<td>201，返回 <code>&amp;lt;script&amp;gt;…</code></td>
+</tr>
+<tr>
+<td>12</td>
+<td>刷新后重放旧刷新令牌</td>
+<td>200，随后 <strong>401 <code>token_reuse</code></strong></td>
+</tr>
+<tr>
+<td>13</td>
+<td>修改并删除自己的公告</td>
+<td>200、204</td>
+</tr>
+<tr>
+<td>14</td>
+<td>连续 6 次错误登录</td>
+<td><strong>429</strong>，<code>Retry-After: 300</code></td>
+</tr>
+</tbody>
+</table>
+<p><img alt="API 实测流程" src="screenshots/api-demo.png"></p>
+<p><em>图 1 — 完整实测流程。每一行都是对真实 SQLite 数据库发起的真实请求的响应。</em></p>
+<h3>3.3 SQL 注入防护</h3>
+<p><strong>原则一：所有值都走绑定参数。</strong> <code>src/db.js</code> 是整个项目唯一包含 SQL 的模块，
+因此“有没有拼接”只需审查一个文件：</p>
+<pre><code class="language-js">const user = db.prepare('SELECT * FROM users WHERE login = ? COLLATE NOCASE').get(login);
+</code></pre>
+<p><strong>原则二：<code>LIKE</code> 需要单独转义。</strong> 绑定参数只能阻止 SQL 语法注入，值中的 <code>%</code>
+和 <code>_</code> 仍然是通配符。搜索“100%”不应返回全表，所以对搜索词做转义，并在语句中
+声明转义符：</p>
+<pre><code class="language-js">function likePattern(term) {
+  return `%${term.replace(/[\\%_]/g, (char) =&gt; `\\${char}`)}%`;
+}
+// ...
+`(n.title LIKE ? ESCAPE '\\' OR n.body LIKE ? ESCAPE '\\')`
+</code></pre>
+<p><strong>原则三：标识符不能参数化，因此使用白名单。</strong> 排序字段来自客户端，但永远
+不会进入 SQL 文本：</p>
+<pre><code class="language-js">const SORT_CLAUSES = Object.freeze({
+  newest: 'n.created_at DESC, n.id DESC',
+  oldest: 'n.created_at ASC, n.id ASC',
+  title:  'n.title COLLATE NOCASE ASC, n.id ASC',
+});
+const orderBy = SORT_CLAUSES[sort] || SORT_CLAUSES.newest;
+</code></pre>
+<p>枚举之外的值在进入数据层之前就被校验拒绝，所以 <code>?sort=id; DROP TABLE notes</code>
+得到的是 <code>400</code>，而不是一条 SQL 语句。</p>
+<p><strong>证据。</strong> <code>tests/notes.test.js</code> 向搜索接口发送 <code>' OR 1=1 --</code>、
+<code>' UNION SELECT * FROM users --</code>、<code>'; DROP TABLE notes; --</code>：结果全部为
+<code>total=0</code>，随后断言 <code>notes</code> 表数据仍然完整。登录接口对恒真载荷返回 <code>401</code>。
+另一个测试搜索 <code>%</code>，只返回包含字面百分号的那一条公告。</p>
+<h3>3.4 XSS 防护</h3>
+<p>数据库原样保存文本，API 在<strong>输出时</strong>编码——这正是 OWASP XSS 防护速查表的要求。
+在输入时编码会污染数据（下次编辑时还会二次编码）；在输出边界编码既能保持数据可被
+JSON 客户端复用，又能让 HTML 消费者无法执行它。</p>
+<pre><code class="language-js">const HTML_ESCAPES = { '&amp;': '&amp;amp;', '&lt;': '&amp;lt;', '&gt;': '&amp;gt;', '&quot;': '&amp;quot;', &quot;'&quot;: '&amp;#39;', '`': '&amp;#96;' };
+export const escapeHtml = (value) =&gt; String(value).replace(/[&amp;&lt;&gt;&quot;'`]/g, (c) =&gt; HTML_ESCAPES[c]);
+</code></pre>
+<p>公告中所有用户可控字段（<code>title</code>、<code>body</code>、作者登录名与显示名）都在
+<code>presentNote()</code> 中经过 <code>escapeHtml</code>。测试分别存储 <code>&lt;script&gt;</code>、<code>&lt;img onerror&gt;</code>、
+<code>&lt;svg onload&gt;</code>、<code>javascript:</code>、<code>&lt;iframe&gt;</code> 载荷，断言任何响应中都不出现原始形式，
+同时直接查询 SQLite 确认数据库里仍是原始文本（证明是输出编码而非输入清洗）。</p>
+<p>纵深防御：</p>
+<ul>
+<li><code>Content-Type: application/json</code> 与 <code>X-Content-Type-Options: nosniff</code>；</li>
+<li><code>Content-Security-Policy: default-src 'none'; frame-ancestors 'none'</code>——即使
+  某处意外把载荷渲染成文档，也无法加载脚本或被嵌套；</li>
+<li>校验拒绝控制字符并限制字段长度（<code>title</code> 120、<code>body</code> 4000），同时阻断日志注入；</li>
+<li>JSON 请求体使用 <code>.strict()</code> 拒绝未知字段，客户端无法把 <code>author_id</code> 或 <code>role</code>
+  夹带进创建请求。</li>
+</ul>
+<h3>3.5 身份认证</h3>
+<table>
+<thead>
+<tr>
+<th>要求</th>
+<th>实现</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>不存明文</td>
+<td>scrypt，N=2¹⁵、r=8、p=1、16 字节随机盐；参数随哈希一起保存，便于日后提高成本</td>
+</tr>
+<tr>
+<td>恒定时间比较</td>
+<td>对派生密钥使用 <code>crypto.timingSafeEqual</code></td>
+</tr>
+<tr>
+<td>签发令牌</td>
+<td>HS256 JWT：<code>sub</code>、<code>iss</code>、<code>aud</code>、<code>iat</code>、<code>nbf</code>、<code>exp</code>、<code>jti</code>，有效期 15 分钟</td>
+</tr>
+<tr>
+<td>每个受保护接口校验</td>
+<td><code>makeAuthMiddleware</code>：签名、算法、签发者、受众、过期时间、<code>sub</code></td>
+</tr>
+<tr>
+<td>算法固定</td>
+<td><code>algorithms: ['HS256']</code>，可抵御 <code>alg: none</code> 与 RS→HS 混淆攻击</td>
+</tr>
+<tr>
+<td>吊销</td>
+<td>每次请求都从数据库重新读取用户，账号删除后令牌立即失效</td>
+</tr>
+<tr>
+<td>防枚举</td>
+<td>未知用户与错误口令返回完全相同的 401，并执行一次等价的 scrypt 计算以拉平耗时</td>
+</tr>
+<tr>
+<td>暴力破解</td>
+<td>每 (IP, 登录名) 每 5 分钟 5 次失败 → <code>429</code> + <code>Retry-After</code></td>
+</tr>
+<tr>
+<td>刷新</td>
+<td>256 位不透明随机串，数据库只存 SHA-256，每次使用即轮换；重放则吊销整个令牌族</td>
+</tr>
+</tbody>
+</table>
+<p>刷新令牌的设计值得单独说明，因为多数“JWT + refresh”实现都在这里出错。
+刷新令牌不是第二个 JWT，而是不透明随机串，数据库保存其哈希。每次使用都会轮换：
+旧记录标记 <code>rotated_at</code>，在同一 <code>family_id</code> 下插入新记录。若已轮换的令牌再次出现，
+要么客户端重放、要么令牌被盗，服务器直接吊销整个令牌族，使攻击者副本与受害者会话
+一起失效：</p>
+<pre><code class="language-js">if (row.rotated_at) {
+  repo.revokeRefreshFamily(row.family_id);
+  throw unauthorized('Refresh token already used; the session was revoked.', 'token_reuse');
+}
+</code></pre>
+<p>证据：<code>tests/auth.test.js</code> 覆盖过期令牌、攻击者密钥签名、<code>alg: none</code>、错误受众、
+已删除用户、锁定与哈希格式；<code>tests/refresh.test.js</code> 覆盖轮换、重放检测与注销。</p>
+<h3>3.6 访问控制（A01）</h3>
+<p>所有写操作都基于数据库中已加载的记录判断，而不是只信任令牌：</p>
+<pre><code class="language-js">const existing = repo.getNote(id);
+if (!existing) throw notFound('Note not found.');
+if (!canModifyNote(req.user, existing)) {
+  throw forbidden('Only the author or an administrator may edit this note.');
+}
+</code></pre>
+<p><code>canModifyNote</code> 的实现是 <code>note.author_id === user.id || user.role === 'admin'</code>，
+只存在于一个位置，新增路由无法“忘记”调用。测试创建第三个用户，断言其修改他人公告
+得到 <code>403</code>，而管理员可以管理；非数字 id（<code>1 OR 1=1</code>）返回 <code>404</code>，不会变成数据库错误。</p>
+<h3>3.7 测试</h3>
+<pre><code class="language-bash">npm test                  # 52 个测试
+npm run coverage          # 行覆盖 96.7%，分支 86.0%，函数 95.2%
+</code></pre>
+<pre><code>tests 52 | suites 6 | pass 52 | fail 0
+all files | 96.73 % lines | 86.00 % branches | 95.18 % functions
+</code></pre>
+<p>每个测试文件用内存数据库构建独立应用，测试之间不共享状态，可任意顺序执行。
+它们运行在真实的 Express 栈与真实的 SQL 引擎上，除日志外没有 mock。</p>
+<p><img alt="测试套件" src="screenshots/tests.png"></p>
+<p><em>图 2 — <code>node --test</code> 运行结果。</em></p>
+<h3>3.8 CI/CD 与 SAST/SCA</h3>
+<p><code>.github/workflows/ci.yml</code> 在每次 push 与 pull request 时运行四个 job：</p>
+<table>
+<thead>
+<tr>
+<th>Job</th>
+<th>工具</th>
+<th>证明什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test</code></td>
+<td><code>node --test</code>，Node 22 + 24 矩阵，覆盖率</td>
+<td>功能与安全回归在两条 LTS 线上都通过</td>
+</tr>
+<tr>
+<td><code>lint</code></td>
+<td>ESLint <code>--max-warnings=0</code></td>
+<td>无未使用代码、无常见缺陷模式</td>
+</tr>
+<tr>
+<td><code>sast</code></td>
+<td>ESLint + <code>eslint-plugin-security</code></td>
+<td>无 <code>eval</code>、动态 <code>require</code>、不安全正则、<code>child_process</code> 误用等</td>
+</tr>
+<tr>
+<td><code>sca</code></td>
+<td><code>npm audit --audit-level=high</code></td>
+<td>锁文件中没有已知存在漏洞的依赖</td>
+</tr>
+</tbody>
+</table>
+<p>两个扫描器都会把输出写入 job summary 并作为 artifact 上传，评审者看到的是工具
+输出本身，而不只是一个绿色对勾。</p>
+<p>同样的四个 job 可以在本地复现（<code>scripts/ci-local.ps1</code>，因依赖已安装而跳过 <code>npm ci</code>）：</p>
+<pre><code>Job  Exit Status
+test    0 PASS
+lint    0 PASS
+sast    0 PASS
+sca     0 PASS
+RESULT: all 4 jobs passed
+</code></pre>
+<p><img alt="CI 四个 job" src="screenshots/ci-local.png"></p>
+<p><em>图 3 — 在本机执行 <code>ci.yml</code> 中的四个 job。</em></p>
+<p><img alt="SAST 报告" src="screenshots/sast-eslint.png"></p>
+<p><em>图 4 — SAST 报告：分析 19 个文件，0 错误、0 警告。</em></p>
+<p><img alt="SCA 报告" src="screenshots/sca-osv.png"></p>
+<p><em>图 5 — SCA 报告：190 个锁定依赖，无已知漏洞。</em></p>
+<blockquote>
+<p><strong>关于流水线链接。</strong> 上述截图是在本机执行 <code>ci.yml</code> 中完全相同命令的真实结果；
+仓库尚未从这台机器推送，因此暂时没有 Actions 运行链接。首次推送后，同样的四个
+job 会在 GitHub 上运行，运行链接与 Actions 截图将补充/替换图 3。这里明确说明，
+而不是把本地运行伪装成 GitHub 运行。</p>
+</blockquote>
+<h3>3.9 已知局限</h3>
+<ul>
+<li>限速器与会话状态在进程内：单实例正确，多实例部署需要 Redis（或共享表）才能
+  保证限速与吊销全局生效。</li>
+<li>刷新令牌只做哈希存储，没有绑定设备；在轮换前就被使用的被盗令牌无法与真实客户端
+  区分。</li>
+<li>本实验不包含浏览器前端，因此没有 CORS 层；真实部署需要显式白名单。</li>
+<li>SQLite 写操作串行化，适合实验，不适合写密集的生产服务。</li>
+</ul>
+<hr>
+<h2>4. 第二部分：CVE-2022-22965（Spring4Shell）</h2>
+<h3>4.1 选题</h3>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CVE</td>
+<td><strong>CVE-2022-22965</strong></td>
+</tr>
+<tr>
+<td>组件</td>
+<td>Spring Framework MVC 数据绑定，Tomcat 上的 WAR 部署，JDK 9+</td>
+</tr>
+<tr>
+<td>类别</td>
+<td>CWE-94 — 代码生成控制不当（“代码注入”）</td>
+</tr>
+<tr>
+<td>CVSS 3.1</td>
+<td><strong>9.8 CRITICAL</strong> — <code>AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H</code></td>
+</tr>
+<tr>
+<td>影响版本</td>
+<td>Spring 5.3.0–5.3.17、5.2.0–5.2.19</td>
+</tr>
+<tr>
+<td>修复版本</td>
+<td>Spring 5.3.18 / 5.2.20（2022-03-31）</td>
+</tr>
+<tr>
+<td>Vulhub</td>
+<td><code>vulhub/spring/CVE-2022-22965</code></td>
+</tr>
+</tbody>
+</table>
+<p>选择该 CVE 的原因：根本原因是<strong>框架设计问题</strong>而非某个应用漏写检查；利用只需一个
+HTTP 请求，效果明确；修复方式是版本升级，正好对应实验要求的修补路径。</p>
+<h3>4.2 漏洞环境</h3>
+<pre><code class="language-bash">cd cve
+docker compose up -d          # vulhub/spring-webmvc:5.3.17
+</code></pre>
+<p>容器内为 Spring MVC 5.3.17，以 <code>ROOT.war</code> 打包，Tomcat 8.5.77，OpenJDK 11。
+WAR 部署不是无关细节——原因见 4.4 节。</p>
+<pre><code class="language-bash">curl -s 'http://127.0.0.1:8080/?name=Bob&amp;age=25'
+# &lt;h2&gt;Hello, my name is Bob, I am 25 years old.&lt;/h2&gt;
+</code></pre>
+<h3>4.3 复现攻击</h3>
+<pre><code class="language-powershell">powershell -ExecutionPolicy Bypass -File .\exploit.ps1
+</code></pre>
+<pre><code>1. Baseline: the application works normally
+   &lt;h2&gt;Hello, my name is Bob, I am 25 years old.&lt;/h2&gt;
+
+2. Exploit: rewrite the Tomcat access-log valve into a JSP webshell
+   HTTP 200
+
+3. Trigger execution through the webshell: /tomcatwar.jsp?pwd=j&amp;cmd=id
+   uid=0(root) gid=0(root) groups=0(root)
+   RCE CONFIRMED — the command output above was produced by the target process
+   --- whoami ---
+   root
+   --- hostname ---
+   fca45319547f
+</code></pre>
+<p><img alt="漏洞利用" src="screenshots/cve-exploit.png"></p>
+<p><em>图 6 — 漏洞靶场：正常基线、恶意绑定请求，以及通过生成的 JSP 执行命令。</em></p>
+<p>整个攻击只是一个 <code>GET /</code> 请求，参数<strong>名</strong>就是攻击载荷：</p>
+<pre><code>class.module.classLoader.resources.context.parent.pipeline.first.pattern=&lt;JSP&gt;
+class.module.classLoader.resources.context.parent.pipeline.first.suffix=.jsp
+class.module.classLoader.resources.context.parent.pipeline.first.directory=webapps/ROOT
+class.module.classLoader.resources.context.parent.pipeline.first.prefix=tomcatwar
+class.module.classLoader.resources.context.parent.pipeline.first.fileDateFormat=
+</code></pre>
+<p>另加三个请求头（<code>c1: Runtime</code>、<code>c2: &lt;%</code>、<code>suffix: %&gt;//</code>），由日志 pattern 在写入
+时展开成 JSP 源码。属性路径沿容器的对象图逐级前进：</p>
+<pre><code>class → module → classLoader → resources → context → parent → pipeline → first
+  Class    Module   WebappCL    WebRoot     Context    Host      Pipeline  AccessLogValve
+</code></pre>
+<p><code>first</code> 就是 Tomcat 的 <code>AccessLogValve</code>。改写 <code>pattern</code>、<code>directory</code>、<code>prefix</code>、
+<code>suffix</code> 后，下一条访问日志会写入 <code>webapps/ROOT</code> 下的 <code>.jsp</code> 文件，日志内容就是
+Servlet 源码，请求该文件即执行。<code>fileDateFormat</code> 置空去掉文件名中的日期，因此
+shell 路径为 <code>/tomcatwar.jsp</code>。Tomcat 对访问日志有 128 KiB 缓冲，所以脚本等待约
+10 秒再触发。</p>
+<h3>4.4 根本原因</h3>
+<p>Spring MVC 会把请求参数绑定到处理器方法的模型属性上：</p>
+<pre><code class="language-java">@RequestMapping(&quot;/&quot;)
+public String hello(Person person, Model model) { ... }
+</code></pre>
+<p>5.3.18 之前，<code>CachedIntrospectionResults</code> 向该绑定器暴露 JavaBeans 的 <code>class</code>
+属性。攻击者从 <code>Class</code> 出发，可以到达 JDK 9+ 的 <code>Module</code>、模块的 <code>classLoader</code>、
+Tomcat 的 Web 资源、<code>StandardContext</code>、其父 <code>StandardHost</code>、Host 的 pipeline，
+以及第一个 Valve。每一步都是普通的公有 getter，<strong>没有任何地方检查“这个请求是否
+应该被允许触碰容器内部对象”</strong>。</p>
+<p>因此缺陷的本质是“绑定器本不该拥有的能力”，而不是示例应用漏写了一个鉴权检查。
+两个前提条件缩小了影响范围：应用必须绑定 POJO（而不是逐个 <code>@RequestParam</code>），
+并且必须以 WAR 形式运行在 Tomcat 上，因为 <code>resources.context.parent</code> 是 Servlet
+容器的对象图。JDK 8 上链路更短，该利用不成立；Spring Boot 可执行 jar 通常没有
+配置访问日志 Valve，公开的利用链不成立（但公告仍认为该原语具有普遍性）。</p>
+<p>影响：以 Tomcat 进程用户身份执行任意命令。本容器中该用户是 <code>root</code>，因此得到
+<code>uid=0(root)</code>；正常部署中通常是服务账号，但它仍然拥有应用、数据库凭据与文件。</p>
+<h3>4.5 修复</h3>
+<p><code>cve/Dockerfile.fixed</code> 用同一应用重新构建镜像，把 Spring 各 jar 升级到
+<strong>5.3.18</strong>——使 <code>class.*</code>（以及 <code>Class.*</code>、<code>*.class.*</code>、<code>*.Class.*</code>）不可绑定的
+版本。基础镜像没有 <code>jar</code> 工具，因此 Dockerfile 把 <code>ROOT.war</code> 解包为
+<code>webapps/ROOT</code> 目录，替换 <code>WEB-INF/lib/spring-*.jar</code>，由 Tomcat 部署该目录。</p>
+<pre><code class="language-bash">docker compose down
+docker compose -f docker-compose.fixed.yml up -d --build
+docker exec spring4shell-fixed unzip -p \
+  /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/spring-webmvc-5.3.18.jar \
+  META-INF/MANIFEST.MF | head -5
+</code></pre>
+<p>为什么这是正确的修复：改动位于 <code>CachedIntrospectionResults</code>，<code>class</code> 属性<strong>根本
+无法再被访问</strong>，从而移除了原语，而不是只拦截一个公开载荷。公告中为无法升级的应用
+提供的临时方案——在 <code>@InitBinder</code> 中调用
+<code>setDisallowedFields("class.*", "Class.*", "*.class.*", "*.Class.*")</code>——必须在
+每个绑定输入的控制器中重复，因此升级框架更可取。</p>
+<p><strong>不构成修复的做法</strong>：删除 webshell（下一个请求会重建）、关闭访问日志（丢失审计且
+原语仍在）、在 WAF 中拦截字面量 <code>class.module</code>（属性路径极易变形）、以非 root 用户
+运行 Tomcat（是良好加固，但 webshell 仍以应用权限执行）。</p>
+<h3>4.6 验证修复</h3>
+<pre><code class="language-powershell">powershell -ExecutionPolicy Bypass -File .\verify-fix.ps1
+</code></pre>
+<pre><code>1. Regression: the application still serves normal requests
+GET /?name=Bob&amp;age=25 -&gt; HTTP 200
+[PASS] normal request returns 200 and renders Bob, 25
+
+2. Replay the exploit (Spring 5.3.18 ignores the class.* properties)
+exploit request -&gt; HTTP 200 (200 here means 'ignored', not 'exploited')
+
+3. No webshell was written
+GET /tomcatwar.jsp -&gt; HTTP 404
+[PASS] the JSP webshell does not exist (404)
+[PASS] no *.jsp file in the exploded webroot
+
+4. The access-log valve was not rewritten
+last access-log line: 172.18.0.1 - - [...] &quot;GET /?name=Regression&amp;age=30 HTTP/1.1&quot; 200 92
+[PASS] the access log keeps the default pattern (request line, status, bytes)
+[PASS] the log line does not contain JSP source
+
+5. Binding of normal model properties still works
+[PASS] argument binding for the normal model still works
+
+RESULT: 6 passed, 0 failed
+fix verified - all checks passed
+</code></pre>
+<p><img alt="修复验证" src="screenshots/cve-fixed.png"></p>
+<p><em>图 7 — 修补后的靶场：全部检查通过，包括两个“简单测试”会漏掉的项目。</em></p>
+<p><strong>为什么验证不看状态码。</strong> Spring 5.3.18 并不会对恶意请求返回 <code>400</code>，而是静默忽略
+不可绑定的属性并返回正常页面（<code>200</code>）。因此“利用请求必须返回 400”的测试在<strong>正确
+修补</strong>的服务器上会失败，并诱使有人去改测试而不是改服务器。脚本改为检查<strong>效果</strong>：</p>
+<ol>
+<li>根目录下不存在 <code>tomcatwar.jsp</code>，也没有任何 <code>.jsp</code> 被创建；</li>
+<li>在容器内部检查访问日志，仍保持默认 pattern——即 Valve 未被改写；</li>
+<li>正常的 <code>name</code>/<code>age</code> 绑定仍然有效，可发现“直接把绑定功能改坏”的假修复。</li>
+</ol>
+<h3>4.7 纵深防御</h3>
+<ul>
+<li>持续更新 Spring 与 Tomcat，把框架 CVE 当作依赖治理工作——第一部分的 SCA job 正是
+  在自动化这件事。</li>
+<li>绑定到字段明确的 DTO，并用 <code>@InitBinder</code> 做白名单（默认拒绝），而不是只对少数
+  字段 <code>setAllowedFields</code>。</li>
+<li>以非特权用户运行容器，Web 根目录只读。</li>
+<li>部署 WAF <strong>并且</strong>保持框架已修补——WAF 争取时间，不是修复。</li>
+<li>对请求日志中出现 <code>class.module.classLoader</code> 的行为告警：正常客户端不会发送它。</li>
+</ul>
+<hr>
+<h2>5. 结论</h2>
+<p>两部分在同一个结论上汇合。第一部分说明：OWASP Top 10 要求的防护可以在一个小型服务中
+落地，而且每一项都可测试——载荷要么通过认证、要么不通过；脚本标签要么到达客户端、
+要么被编码。第二部分说明同一枚硬币的另一面：一个框架特性足以推翻整个应用的安全态势，
+而唯一持久的修复是移除<strong>能力</strong>，不是移除<strong>载荷</strong>。</p>
+<p>最有价值的发现是“验证陷阱”。升级之后，攻击请求依然返回 <code>200</code>，改变的只是<strong>效果</strong>。
+用状态码验证修复，会把已修补的服务器判为存在漏洞；更糟的是，删除 JSP 或关闭日志这类
+表面“修复”反而会通过。检查对象图的行为并复测正常功能，才能区分修复与绕过。</p>
+<h3>与评分标准的对应</h3>
+<table>
+<thead>
+<tr>
+<th>评分项</th>
+<th>分值</th>
+<th>对应位置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API 功能</td>
+<td>2</td>
+<td>3.2 节、图 1–2：登录、受保护列表、增删改、刷新</td>
+</tr>
+<tr>
+<td>SQL 注入防护</td>
+<td>0.5</td>
+<td>3.3 节；<code>tests/notes.test.js</code></td>
+</tr>
+<tr>
+<td>XSS 防护</td>
+<td>0.5</td>
+<td>3.4 节；转义测试</td>
+</tr>
+<tr>
+<td>认证（JWT + 哈希）</td>
+<td>1</td>
+<td>3.5 节；<code>tests/auth.test.js</code>、<code>tests/refresh.test.js</code></td>
+</tr>
+<tr>
+<td>CI/CD 与 SAST/SCA</td>
+<td>2</td>
+<td>3.8 节、图 3–5；<code>.github/workflows/ci.yml</code></td>
+</tr>
+<tr>
+<td>漏洞环境与复现</td>
+<td>2</td>
+<td>4.2–4.3 节、图 6；<code>cve/</code></td>
+</tr>
+<tr>
+<td>根本原因分析深度</td>
+<td>1</td>
+<td>4.4 节</td>
+</tr>
+<tr>
+<td>修复与验证</td>
+<td>1</td>
+<td>4.5–4.6 节、图 7；<code>cve/Dockerfile.fixed</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>6. 思考题</h2>
+<p><strong>1. 为什么口令哈希优先使用 bcrypt 而不是 SHA-256？</strong>
+SHA-256 的设计目标是快：GPU 每秒可计算数十亿个候选，泄露的摘要可被大规模爆破。
+bcrypt/scrypt/Argon2 被刻意设计得慢，并带随机盐：盐使预计算彩虹表失效，成本因子使
+每次猜测都昂贵，scrypt/Argon2 还需要内存，进一步削弱 GPU/ASIC 的优势。本项目使用
+scrypt（N=2¹⁵、r=8、p=1），单次约 80 ms、32 MiB——对一次登录不可感知，对离线爆破
+则是灾难。</p>
+<p><strong>2. SAST 与 DAST 的主要区别？</strong>
+SAST 在不运行程序的情况下分析源码或字节码：能看到每个分支，在部署前的 CI 中运行，
+直接给出文件与行号，但看不到运行时配置，且存在误报。DAST 从外部攻击运行中的应用：
+能发现真实可达的问题（包括配置与认证问题），但只能覆盖爬虫走到的路径，且无法指出
+代码中的缺陷位置。两者互补：本实验使用 SAST，配套的 DAST 实验使用 ZAP。</p>
+<p><strong>3. JWT 的工作机制是什么？包含什么信息？服务器如何验证真实性？</strong>
+JWT 形如 <code>base64url(header).base64url(payload).base64url(signature)</code>。头部声明算法，
+载荷携带声明（<code>sub</code>、<code>iss</code>、<code>aud</code>、<code>exp</code>、<code>iat</code>、<code>jti</code>），签名是对前两部分的 HMAC
+（HS256）或公钥签名（RS256）。服务器用密钥（或公钥）验证签名，再校验签发者、受众、
+过期时间等声明。令牌是<strong>签名而非加密</strong>：任何人都能读取载荷，因此不能放秘密。本项目
+还会在每次请求时重新读取用户，账号删除后令牌立即失效。</p>
+<p><strong>4. 不审计第三方依赖会带来哪些风险？</strong>
+项目会继承整棵依赖树的漏洞，包括没人审查过的传递依赖。已知 CVE 是公开的，工具化
+利用成本极低（Spring4Shell 只需一个请求）。没有 SCA，你往往是在事故中而不是在 CI 中
+得知问题。依赖审计还会暴露废弃包、许可证冲突与供应链风险（名称抢注、维护者账号被
+攻陷）。CI 中的 <code>npm audit</code> 与本地 OSV 扫描只是最低要求。</p>
+<p><strong>5. 使用 Docker 与 Vulhub 学习安全有哪些优势？</strong>
+隔离（故意有漏洞的服务运行在私有网络而非宿主机）、可复现（镜像与 compose 文件锁定
+精确版本）、快速（容器秒级销毁重建，RCE 可反复执行并立即验证修复）、安全（工作站上
+不安装易受攻击的软件）。Vulhub 还提供整理好的环境与利用说明，省去搭建工作，把精力
+留给分析。</p>
+<p><strong>6. 漏洞与利用（exploit）的区别？本实验复现的是哪一个？</strong>
+漏洞是弱点本身（绑定器暴露 <code>class.module…</code>）；利用是滥用它的具体步骤（参数名、
+构造 JSP 的请求头、访问生成文件的请求）。本实验中<strong>漏洞</strong>是 Spring 5.3.17 的
+CVE-2022-22965；<strong>利用</strong>是 <code>exploit.ps1</code> 发出的 HTTP 请求与生成的 webshell。
+复现利用证明该漏洞在此配置下可达。</p>
+<p><strong>7. 修复后为什么必须做回归测试？</strong>
+补丁必然改变行为，而安全补丁常常触及共享代码。没有回归检查，就无法区分“攻击被阻断”
+与“功能被弄坏”。本实验的修复很容易被实现成“禁用模型绑定”或“关闭访问日志”，那会
+挡住利用同时破坏应用。因此 <code>verify-fix.ps1</code> 还断言 <code>/?name=Bob&amp;age=25</code> 仍能正确渲染。</p>
+<p><strong>8. 掌握 CVE 对渗透测试人员或 SOC 分析师有什么价值？</strong>
+对渗透测试人员，CVE 给出已知可达的原语、公开验证与精确版本范围——从“看起来像
+Spring”到“可被利用”的最短路径。对 SOC 分析师，同样的知识驱动检测：请求特征
+（<code>class.module.classLoader</code>）、后利用痕迹（Web 根目录新增 <code>.jsp</code>）与升级时间线。
+两种角色都需要复现与验证，否则只是在转述传闻。</p>
+<hr>
+<h2>7. 提交清单</h2>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>位置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>公开代码仓库</td>
+<td><code>https://github.com/faris-faris-faris/work1-secure-notes-api</code>（推送后生效）</td>
+</tr>
+<tr>
+<td>含 API、安全措施、CVE、根因、修复与证据的 README</td>
+<td><code>README.md</code></td>
+</tr>
+<tr>
+<td>最近一次成功流水线链接</td>
+<td><code>…/actions</code>（首次推送后）</td>
+</tr>
+<tr>
+<td>SAST/SCA 截图</td>
+<td>图 3–5，<code>docs/screenshots/</code></td>
+</tr>
+<tr>
+<td>CVE 复现命令与截图</td>
+<td>4.2–4.3 节、图 6</td>
+</tr>
+<tr>
+<td>根本原因分析</td>
+<td>4.4 节</td>
+</tr>
+<tr>
+<td>修复与消除证明</td>
+<td>4.5–4.6 节、图 7、<code>cve/Dockerfile.fixed</code></td>
+</tr>
+<tr>
+<td>修复文件目录</td>
+<td><code>cve/</code></td>
+</tr>
+<tr>
+<td>报告（中英双语 PDF）</td>
+<td><code>docs/report_en.pdf</code>、<code>docs/report_zh.pdf</code></td>
+</tr>
+<tr>
+<td>证据原始记录</td>
+<td><code>docs/evidence/</code></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>封面已填写姓名（Wu ZiYang）与 HDU 学号（23320121）；变体号未分配（—）。
+仓库与流水线链接在首次推送后生效，具体步骤见 <code>docs/SUBMISSION.md</code>。</p>
+</blockquote>
+</body>
+</html>

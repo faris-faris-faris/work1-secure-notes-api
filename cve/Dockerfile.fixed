@@ -1,0 +1,36 @@
+# Patched target: the same application, with the Spring Framework jars upgraded
+# 5.3.17 -> 5.3.18, the release that rejects data binding to `class.*`.
+#
+# The base image ships the application as /usr/local/tomcat/webapps/ROOT.war and
+# runs a JRE (no `jar` tool). Tomcat also deploys an exploded directory, so the
+# fix unpacks the WAR into webapps/ROOT, swaps the Spring jars, and lets Tomcat
+# deploy the directory instead of the archive. Same application, different
+# framework version — nothing else changes.
+FROM vulhub/spring-webmvc:5.3.17
+
+USER root
+
+# 1. Fetch the fixed Spring artifacts (same 5.3.x line, patched release).
+RUN mkdir -p /tmp/spring && cd /tmp/spring && \
+    for artifact in spring-core spring-beans spring-context spring-aop \
+                    spring-expression spring-web spring-webmvc spring-jcl; do \
+        curl -fsSL -o "$artifact-5.3.18.jar" \
+            "https://repo1.maven.org/maven2/org/springframework/$artifact/5.3.18/$artifact-5.3.18.jar" || exit 1; \
+    done && \
+    ls -l /tmp/spring
+
+# 2. Unpack the WAR to an exploded webapp and replace every Spring jar.
+RUN cd /usr/local/tomcat/webapps && \
+    mkdir -p ROOT && cd ROOT && \
+    unzip -q ../ROOT.war && \
+    rm -f ../ROOT.war && \
+    rm -f WEB-INF/lib/spring-*.jar && \
+    cp /tmp/spring/*.jar WEB-INF/lib/ && \
+    rm -rf /tmp/spring && \
+    ls -l WEB-INF/lib/spring-*
+
+# 3. Prove the deployed framework version at build time.
+RUN unzip -p /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/spring-webmvc-5.3.18.jar \
+        META-INF/MANIFEST.MF | head -5
+
+EXPOSE 8080

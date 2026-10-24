@@ -1,0 +1,31 @@
+{
+  "name": "campus-notes-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Work 1 - a small but hardened REST API (Node.js + Express + SQLite) with SAST/SCA in CI and a full CVE-2022-22965 study.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test --test-reporter=spec",
+    "coverage": "node --test --experimental-test-coverage --test-reporter=spec",
+    "lint": "eslint .",
+    "sast": "eslint . --format stylish",
+    "sca": "npm audit --audit-level=high",
+    "audit:json": "npm audit --json"
+  },
+  "dependencies": {
+    "express": "5.1.0",
+    "jsonwebtoken": "9.0.2",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "eslint": "9.39.1",
+    "eslint-plugin-security": "3.0.1",
+    "supertest": "7.1.4"
+  }
+}

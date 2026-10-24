@@ -1,0 +1,13 @@
+node_modules/
+data/
+coverage/
+*.db
+*.db-wal
+*.db-shm
+*.log
+eslint-report.json
+npm-audit.json
+sast-results.txt
+.env
+.DS_Store
+Thumbs.db

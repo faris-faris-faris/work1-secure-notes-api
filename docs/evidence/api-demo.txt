@@ -1,0 +1,67 @@
+[1mCampus Notes API — Work 1 walkthrough[0m
+[2mtarget http://127.0.0.1:3000
+[0m
+
+[1m[1] GET /health (no authentication)[0m
+GET /health -> 200 {"status":"ok","uptime_seconds":3}
+[32mPASS[0m liveness probe returns 200
+
+[1m[2] POST /auth/login — wrong password[0m
+POST /auth/login (wrong) -> 401 {"code":"invalid_credentials","message":"Invalid login or password."}
+[32mPASS[0m wrong password is refused with 401
+
+[1m[3] POST /auth/login — correct credentials[0m
+POST /auth/login -> 200 expires_in=900 role=admin
+[32mPASS[0m JWT issued with a 15-minute lifetime
+[32mPASS[0m refresh token issued
+[2mtoken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI…[0m
+
+[1m[4] GET /api/data without a token[0m
+GET /api/data -> 401 {"error":{"code":"missing_token","message":"Missing or malformed Authorization h…
+[32mPASS[0m anonymous access is denied with 401
+
+[1m[5] GET /api/data with a forged token[0m
+GET /api/data (forged) -> 401 {"code":"invalid_token","message":"Invalid token."}
+[32mPASS[0m a token with a bad signature is rejected
+
+[1m[6] GET /api/data with the real token[0m
+GET /api/data -> 200 total=3 items=3
+[2mfirst item: Found: a blue umbrella near the library[0m
+[32mPASS[0m the feed is readable by an authenticated user
+
+[1m[7] POST /api/notes — create (the "own method")[0m
+POST /api/notes -> 201 id=4 author=alice
+[32mPASS[0m authenticated creation returns 201
+
+[1m[8] PATCH someone else's note — broken access control[0m
+PATCH /api/notes/4 as bob -> 403 {"code":"forbidden","message":"Only the author or an administrator may edit this note."}
+[32mPASS[0m another user cannot edit the note (403)
+
+[1m[9] POST /auth/login with a SQL injection payload[0m
+POST /auth/login (SQLi) -> 401 {"code":"invalid_credentials","message":"Invalid login or password."}
+[32mPASS[0m SQL injection cannot bypass authentication
+
+[1m[10] GET /api/data?q=… with a SQL injection payload[0m
+GET /api/data?q=' OR 1=1 -- -> 200 total=0
+[32mPASS[0m the payload is treated as literal text (0 matches)
+
+[1m[11] POST /api/notes with a stored-XSS payload[0m
+stored body: &lt;script&gt;alert(&quot;XSS&quot;)&lt;/script&gt;
+[32mPASS[0m the script tag is HTML-escaped on output
+
+[1m[12] POST /auth/refresh — rotation and reuse detection[0m
+POST /auth/refresh -> 200 new refresh token differs=true
+[32mPASS[0m the refresh token is rotated
+replay the old refresh token -> 401 {"code":"token_reuse","message":"Refresh token already used; the session was revoked."}
+[32mPASS[0m reuse revokes the family (401 token_reuse)
+
+[1m[13] PATCH + DELETE the note as its owner[0m
+PATCH own note -> 200 category=exam
+DELETE own note -> 204
+[32mPASS[0m owner update and delete succeed
+
+[1m[14] Brute-force lockout[0m
+6th failed login -> 429 Retry-After=300 s
+[32mPASS[0m repeated failures return 429 with Retry-After
+
+[1mRESULT:[0m 16 passed, 0 failed

@@ -1,0 +1,9 @@
+﻿SAST report — ESLint with eslint-plugin-security
+files analysed      : 19
+errors              : 0
+warnings            : 0
+distinct rules hit  : 0
+
+findings by rule: none
+
+RESULT: no errors — the SAST gate passes.

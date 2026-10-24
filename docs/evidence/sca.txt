@@ -1,0 +1,6 @@
+﻿SCA report — OSV.dev (aggregates GHSA / CVE / ecosystem advisories)
+runtime dependencies : 83
+dev dependencies     : 107 (not shipped, still scanned for completeness)
+
+No known vulnerabilities found in 190 locked packages.
+RESULT: SCA gate passes.

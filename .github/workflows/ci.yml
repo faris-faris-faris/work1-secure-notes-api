@@ -1,0 +1,115 @@
+name: ci
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: test (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["22", "24"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - name: Run the test suite with coverage
+        run: npm run coverage
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-node-${{ matrix.node }}
+          path: coverage/
+          if-no-files-found: ignore
+
+  lint:
+    name: lint (eslint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npx eslint . --max-warnings=0
+
+  sast:
+    name: sast (eslint-security)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Static analysis of security-relevant patterns
+        run: |
+          set -o pipefail
+          npx eslint . --format stylish --output-file sast-results.txt || true
+          cat sast-results.txt
+          if grep -qE 'security/(detect-eval|detect-child-process|detect-non-literal|detect-pseudoRandomBytes|detect-buffer-noassert|detect-disable-mustache-escape|detect-new-buffer|detect-object-injection|detect-unsafe-regex)' sast-results.txt; then
+            echo "::error::eslint-security reported a security finding"
+            exit 1
+          fi
+          echo "No security findings." >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sast-eslint-security
+          path: sast-results.txt
+
+  sca:
+    name: sca (npm audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Audit the dependency tree
+        run: |
+          npm audit --audit-level=high --json > npm-audit.json || true
+          node -e '
+            const report = require("./npm-audit.json");
+            const v = report.metadata?.vulnerabilities ?? {};
+            const total = Object.values(v).reduce((a, b) => a + b, 0);
+            console.log(`vulnerabilities: total=${total} high=${v.high ?? 0} critical=${v.critical ?? 0}`);
+            if ((v.high ?? 0) + (v.critical ?? 0) > 0) {
+              console.error("high or critical dependency vulnerabilities found");
+              process.exit(1);
+            }
+          '
+      - name: Write the audit summary
+        if: always()
+        run: |
+          {
+            echo "## SCA - npm audit";
+            echo '```';
+            cat npm-audit.json | head -40;
+            echo '```';
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sca-npm-audit
+          path: npm-audit.json

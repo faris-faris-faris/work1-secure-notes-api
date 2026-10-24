@@ -1,0 +1,8 @@
+# Vulnerable target: Spring WebMVC 5.3.17 on Tomcat (WAR deployment, JDK 11).
+# This is the image used by vulhub/spring/CVE-2022-22965.
+services:
+  spring:
+    image: vulhub/spring-webmvc:5.3.17
+    container_name: spring4shell-vulnerable
+    ports:
+      - "8080:8080"

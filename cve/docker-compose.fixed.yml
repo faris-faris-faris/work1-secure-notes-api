@@ -1,0 +1,9 @@
+# Patched environment: same port, same application, Spring 5.3.18 instead of 5.3.17.
+services:
+  spring:
+    build:
+      context: .
+      dockerfile: Dockerfile.fixed
+    container_name: spring4shell-fixed
+    ports:
+      - "8080:8080"

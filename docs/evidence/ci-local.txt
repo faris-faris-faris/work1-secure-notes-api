@@ -1,0 +1,108 @@
+
+=== job: test (node --test) ===
+▶ authentication
+  ✔ issues a JWT and a refresh token for valid credentials (97.1521ms)
+  ✔ accepts the login case-insensitively (16.2595ms)
+  ✔ rejects a wrong password with 401 (16.3281ms)
+  ✔ answers unknown user and wrong password identically (no enumeration) (34.8082ms)
+  ✔ rejects a missing field with a validation error (10.1338ms)
+  ✔ rejects unknown extra fields (mass assignment guard) (8.1798ms)
+  ✔ denies a protected endpoint without a token (8.2333ms)
+  ✔ denies a malformed Authorization header (8.0293ms)
+  ✔ denies a token signed with another key (11.3559ms)
+  ✔ denies an unsigned (alg: none) token (8.8766ms)
+  ✔ denies an expired token (8.0101ms)
+  ✔ denies a token issued for another audience (8.4192ms)
+  ✔ stops working after the account is deleted (26.1546ms)
+  ✔ locks out after the configured number of failed attempts (56.4188ms)
+  ✔ never stores the password in plaintext (0.6672ms)
+✔ authentication (350.7636ms)
+▶ password hashing primitives
+  ✔ produces a unique salt per hash (19.5476ms)
+  ✔ rejects a wrong password and malformed hashes (9.6238ms)
+  ✔ escapes the HTML-significant characters (0.2414ms)
+✔ password hashing primitives (29.7394ms)
+▶ notes API
+  ✔ returns the feed to an authenticated user (14.1679ms)
+  ✔ paginates deterministically (16.5475ms)
+  ✔ sorts only by whitelisted columns (35.4656ms)
+  ✔ treats a SQL injection payload in the search term as literal text (22.2035ms)
+  ✔ escapes LIKE wildcards so "%" is a literal character (20.5862ms)
+  ✔ filters by category (7.7181ms)
+  ✔ rejects unknown query parameters (7.2575ms)
+  ✔ creates a note and returns 201 with a Location header (6.895ms)
+  ✔ rejects invalid and unknown fields on create (25.8482ms)
+  ✔ rejects control characters in text fields (7.5563ms)
+  ✔ lets the author edit a note (7.1357ms)
+  ✔ forbids editing someone else's note (IDOR) (7.2359ms)
+  ✔ lets an administrator moderate any note (6.6835ms)
+  ✔ returns 404 for a note that does not exist or a non-numeric id (17.2135ms)
+  ✔ deletes a note for its author and then 404s (21.7135ms)
+  ✔ escapes stored XSS payloads on output while storing the raw text (27.0439ms)
+  ✔ reports the identity carried by the token (5.5972ms)
+  ✔ rejects an oversized body with 413 (9.3272ms)
+  ✔ rejects malformed JSON with 400 (6.2314ms)
+✔ notes API (446.7416ms)
+▶ refresh-token sessions
+  ✔ rotates the refresh token on every use (111.4361ms)
+  ✔ revokes the whole family when a rotated token is replayed (40.6981ms)
+  ✔ rejects an unknown or malformed refresh token (16.604ms)
+  ✔ rejects an expired refresh token (21.7118ms)
+  ✔ revokes the session on logout (26.0861ms)
+✔ refresh-token sessions (239.9597ms)
+▶ HTTP hardening
+  ✔ sets the security headers on success responses (12.6799ms)
+  ✔ sets the same headers on errors and 404s (19.4645ms)
+  ✔ does not advertise the framework (8.6858ms)
+  ✔ does not require authentication for the liveness probe (7.7802ms)
+  ✔ returns a JSON 404 for an unknown endpoint (7.5171ms)
+  ✔ does not allow an unsupported method on an existing path (7.3567ms)
+✔ HTTP hardening (189.8529ms)
+▶ configuration guards
+  ✔ refuses to start in production without a strong JWT secret (1.8233ms)
+  ✔ refuses demo users in production (0.4961ms)
+  ✔ generates a fresh random secret in development (0.5181ms)
+  ✔ rejects an invalid numeric setting (0.4131ms)
+✔ configuration guards (3.9998ms)
+ℹ tests 52
+ℹ suites 6
+ℹ pass 52
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2167.6618
+
+=== job: lint (eslint --max-warnings=0) ===
+
+=== job: sast (eslint-security) ===
+SAST report — ESLint with eslint-plugin-security
+files analysed      : 19
+errors              : 0
+warnings            : 0
+distinct rules hit  : 0
+
+findings by rule: none
+
+RESULT: no errors — the SAST gate passes.
+
+=== job: sca (OSV.dev —CI runs npm audit) ===
+SCA report — OSV.dev (aggregates GHSA / CVE / ecosystem advisories)
+runtime dependencies : 83
+dev dependencies     : 107 (not shipped, still scanned for completeness)
+
+No known vulnerabilities found in 190 locked packages.
+RESULT: SCA gate passes.
+
+=== pipeline summary ===
+
+Job  Exit Status
+---  ---- ------
+test    0 PASS  
+lint    0 PASS  
+sast    0 PASS  
+sca     0 PASS  
+
+
+
+RESULT: all 4 jobs passed

@@ -1,0 +1,72 @@
+﻿▶ authentication
+  ✔ issues a JWT and a refresh token for valid credentials (48.5245ms)
+  ✔ accepts the login case-insensitively (8.1193ms)
+  ✔ rejects a wrong password with 401 (7.272ms)
+  ✔ answers unknown user and wrong password identically (no enumeration) (15.2551ms)
+  ✔ rejects a missing field with a validation error (4.2244ms)
+  ✔ rejects unknown extra fields (mass assignment guard) (3.6371ms)
+  ✔ denies a protected endpoint without a token (3.6703ms)
+  ✔ denies a malformed Authorization header (4.0089ms)
+  ✔ denies a token signed with another key (5.6423ms)
+  ✔ denies an unsigned (alg: none) token (3.194ms)
+  ✔ denies an expired token (3.5292ms)
+  ✔ denies a token issued for another audience (4.0051ms)
+  ✔ stops working after the account is deleted (12.2927ms)
+  ✔ locks out after the configured number of failed attempts (29.7987ms)
+  ✔ never stores the password in plaintext (0.2058ms)
+✔ authentication (165.924ms)
+▶ password hashing primitives
+  ✔ produces a unique salt per hash (9.0603ms)
+  ✔ rejects a wrong password and malformed hashes (4.5031ms)
+  ✔ escapes the HTML-significant characters (0.1131ms)
+✔ password hashing primitives (13.8466ms)
+▶ notes API
+  ✔ returns the feed to an authenticated user (7.2845ms)
+  ✔ paginates deterministically (7.915ms)
+  ✔ sorts only by whitelisted columns (20.3069ms)
+  ✔ treats a SQL injection payload in the search term as literal text (11.9666ms)
+  ✔ escapes LIKE wildcards so "%" is a literal character (10.0234ms)
+  ✔ filters by category (3.2977ms)
+  ✔ rejects unknown query parameters (3.5234ms)
+  ✔ creates a note and returns 201 with a Location header (3.1875ms)
+  ✔ rejects invalid and unknown fields on create (11.1468ms)
+  ✔ rejects control characters in text fields (3.0713ms)
+  ✔ lets the author edit a note (3.2858ms)
+  ✔ forbids editing someone else's note (IDOR) (2.819ms)
+  ✔ lets an administrator moderate any note (2.7456ms)
+  ✔ returns 404 for a note that does not exist or a non-numeric id (7.1944ms)
+  ✔ deletes a note for its author and then 404s (9.7238ms)
+  ✔ escapes stored XSS payloads on output while storing the raw text (11.8826ms)
+  ✔ reports the identity carried by the token (2.4107ms)
+  ✔ rejects an oversized body with 413 (5.0443ms)
+  ✔ rejects malformed JSON with 400 (3.0856ms)
+✔ notes API (211.5253ms)
+▶ refresh-token sessions
+  ✔ rotates the refresh token on every use (57.2698ms)
+  ✔ revokes the whole family when a rotated token is replayed (18.1903ms)
+  ✔ rejects an unknown or malformed refresh token (7.5484ms)
+  ✔ rejects an expired refresh token (12.1008ms)
+  ✔ revokes the session on logout (11.2307ms)
+✔ refresh-token sessions (118.9265ms)
+▶ HTTP hardening
+  ✔ sets the security headers on success responses (5.3867ms)
+  ✔ sets the same headers on errors and 404s (7.9212ms)
+  ✔ does not advertise the framework (4.1371ms)
+  ✔ does not require authentication for the liveness probe (3.4929ms)
+  ✔ returns a JSON 404 for an unknown endpoint (3.2995ms)
+  ✔ does not allow an unsupported method on an existing path (4.593ms)
+✔ HTTP hardening (87.6453ms)
+▶ configuration guards
+  ✔ refuses to start in production without a strong JWT secret (1.1041ms)
+  ✔ refuses demo users in production (0.2972ms)
+  ✔ generates a fresh random secret in development (0.3178ms)
+  ✔ rejects an invalid numeric setting (0.2354ms)
+✔ configuration guards (2.4371ms)
+ℹ tests 52
+ℹ suites 6
+ℹ pass 52
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1055.5757

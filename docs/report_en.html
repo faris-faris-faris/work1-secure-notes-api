@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Work 1 — Secure REST API Development with CI/CD and Real CVE Vulnerability Analysis</title>
+<style>
+:root { color-scheme: light; }
+@page { size: A4; margin: 16mm 14mm 18mm 14mm; }
+* { box-sizing: border-box; }
+body {
+  font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", system-ui, sans-serif;
+  font-size: 10.5pt; line-height: 1.62; color: #1b1b1b; margin: 0 auto; max-width: 190mm;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+h1 { font-size: 1.65em; line-height: 1.3; margin: 0 0 .6em; padding-bottom: .3em; border-bottom: 2px solid #2c4a7c; }
+h1 + h1, h1:not(:first-of-type) { page-break-before: always; }
+/* The first blockquote in the reports carries the lab metadata: render it as a
+   cover page instead of a quotation, and start the body on a new page. */
+body > h1:first-of-type { font-size: 1.9em; margin: 1.5em 0 .9em; }
+body > blockquote:first-of-type {
+  border-left: none; background: none; padding: 0; margin: 0 0 1.2em;
+  font-size: 1.02em; line-height: 2.0; page-break-after: always;
+}
+body > blockquote:first-of-type strong { display: inline-block; min-width: 9em; }
+h2 { font-size: 1.22em; margin: 1.5em 0 .5em; padding-bottom: .18em; border-bottom: 1px solid #dde3ea; page-break-after: avoid; }
+h3 { font-size: 1.05em; margin: 1.2em 0 .4em; page-break-after: avoid; }
+h4 { font-size: 1em; margin: 1em 0 .3em; page-break-after: avoid; }
+p { margin: .55em 0; }
+ul, ol { margin: .5em 0 .5em 1.4em; padding: 0; }
+li { margin: .22em 0; }
+li > ul, li > ol { margin: .2em 0 .2em 1.1em; }
+a { color: #1a4d8f; text-decoration: none; word-break: break-word; }
+code {
+  font-family: Consolas, "Cascadia Mono", "SFMono-Regular", monospace; font-size: .9em;
+  background: #f2f4f7; padding: .08em .32em; border-radius: 3px; color: #1f2933;
+}
+pre {
+  background: #f8f9fb; border: 1px solid #e2e6ec; border-left: 4px solid #4a6fa5;
+  padding: 8px 11px; overflow-x: auto; page-break-inside: avoid; margin: .7em 0;
+  font-size: .86em; line-height: 1.5; white-space: pre-wrap; word-break: break-word;
+}
+pre code { background: none; padding: 0; font-size: 1em; }
+table { border-collapse: collapse; width: 100%; margin: .8em 0; font-size: .93em; page-break-inside: avoid; }
+th, td { border: 1px solid #d3dae2; padding: 4px 7px; vertical-align: top; text-align: left; }
+th { background: #eef2f7; font-weight: 600; }
+tbody tr:nth-child(even) { background: #fbfcfd; }
+blockquote {
+  margin: .8em 0; padding: .55em .9em; background: #f6f9fc;
+  border-left: 4px solid #9db4d0; color: #2b323b;
+}
+blockquote p { margin: .18em 0; }
+img { max-width: 100%; max-height: 196mm; height: auto; object-fit: contain; display: block; margin: 10px auto 4px; page-break-inside: avoid; }
+p:has(img) { page-break-inside: avoid; }
+hr { border: none; border-top: 1px solid #dde3ea; margin: 1.4em 0; }
+.missing {
+  border: 1px dashed #c0392b; color: #a53224; background: #fdf6f5;
+  padding: 10px 12px; margin: 8px 0; font-size: .9em; border-radius: 4px;
+}
+.missing code { background: #fff; }
+.task { font-family: Consolas, monospace; }
+@media print { body { max-width: none; } }
+</style>
+</head>
+<body>
+<h1>Work 1 — Secure REST API Development with CI/CD and Real CVE Vulnerability Analysis</h1>
+<blockquote>
+<p><strong>Work no.</strong>: 1<br>
+<strong>Title</strong>: Secure REST API Development with CI/CD and Real CVE Vulnerability Analysis<br>
+<strong>Variant</strong>: —<br>
+<strong>Surname</strong>: Wu<br>
+<strong>Name</strong>: ZiYang<br>
+<strong>HDU number</strong>: 23320121<br>
+<strong>Date</strong>: 2026-10-20<br>
+<strong>Repository</strong>: <code>https://github.com/faris-faris-faris/work1-secure-notes-api</code><br>
+<strong>Pipeline</strong>: <code>https://github.com/faris-faris-faris/work1-secure-notes-api/actions</code></p>
+</blockquote>
+<hr>
+<h2>1. Purpose</h2>
+<ol>
+<li>Build a REST API from scratch with the protections the OWASP Top 10 asks
+   for — parameterised SQL, output encoding, hashed passwords, verified JWTs and
+   ownership checks — and prove each protection with a test rather than a claim.</li>
+<li>Put SAST and SCA into CI/CD so every push and pull request is checked
+   automatically, and show the tools' own output.</li>
+<li>Reproduce a real CVE in a controlled Vulhub environment, explain why the
+   defect exists, patch it, and demonstrate that the attack no longer works.</li>
+<li>Present the result in an engineering form: reproducible commands, comparable
+   before/after evidence, and a fix verified by behaviour rather than by a
+   status code.</li>
+</ol>
+<hr>
+<h2>2. Environment</h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Version / notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OS</td>
+<td>Windows 11 (26300); CI runs on <code>ubuntu-latest</code></td>
+</tr>
+<tr>
+<td>Runtime</td>
+<td>Node.js 24.16 (CI matrix: Node 22 and 24)</td>
+</tr>
+<tr>
+<td>Framework</td>
+<td>Express 5.1</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>SQLite via the built-in <code>node:sqlite</code> module</td>
+</tr>
+<tr>
+<td>Validation</td>
+<td>Zod 3.25</td>
+</tr>
+<tr>
+<td>Auth</td>
+<td>scrypt (N=2¹⁵) + HS256 JWT (<code>jsonwebtoken</code> 9.0) + rotating refresh tokens</td>
+</tr>
+<tr>
+<td>Tests</td>
+<td><code>node:test</code> + <code>supertest</code>, 52 cases</td>
+</tr>
+<tr>
+<td>SAST</td>
+<td>ESLint 9 + <code>eslint-plugin-security</code></td>
+</tr>
+<tr>
+<td>SCA</td>
+<td><code>npm audit</code> (CI) / OSV.dev (<code>scripts/sca-osv.mjs</code>)</td>
+</tr>
+<tr>
+<td>Containers</td>
+<td>Docker Desktop 29.8, Docker Compose v2</td>
+</tr>
+<tr>
+<td>CVE range</td>
+<td>Vulhub <code>spring/CVE-2022-22965</code> (Spring 5.3.17 → 5.3.18)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why Node.js and not Flask.</strong> The previous piece of coursework in this course
+was a Python/Flask service; using Node.js + Express here produces a genuinely
+different implementation instead of a re-typed one. It also exercises a
+different set of failure modes — prototype/JSON handling, <code>ORDER BY</code> cannot be
+parameterised the same way, and the password-hashing library is different
+(scrypt from the standard library) — while still covering every requirement of
+the assignment.</p>
+<hr>
+<h2>3. Part 1 — the secure REST API</h2>
+<h3>3.1 Stack and initialisation</h3>
+<pre><code class="language-bash">mkdir work1-secure-notes-api &amp;&amp; cd work1-secure-notes-api
+npm init -y
+npm install express@5 jsonwebtoken zod
+npm install -D eslint eslint-plugin-security supertest
+git init &amp;&amp; git add . &amp;&amp; git commit -m &quot;feat: secure notes API skeleton&quot;
+git remote add origin https://github.com/faris-faris-faris/work1-secure-notes-api.git
+git push -u origin main
+</code></pre>
+<pre><code>src/
+├── app.js              application factory: headers, JSON limit, error handler
+├── server.js           process entry point, graceful shutdown
+├── config.js           environment configuration + production guards
+├── db.js               schema and every SQL statement
+├── security.js         scrypt, JWT, output encoding, rate limiter
+├── validation.js       Zod schemas for every request
+├── errors.js           one client-safe error type
+├── middleware/auth.js  JWT verification, ownership helper
+└── routes/             auth.js, notes.js
+tests/                  52 tests
+cve/                    vulnerable environment, exploit, patch, verification
+.github/workflows/ci.yml
+</code></pre>
+<h3>3.2 API design</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Method</th>
+<th>Path</th>
+<th>Auth</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>POST</td>
+<td><code>/auth/login</code></td>
+<td>—</td>
+<td>Accepts <code>login</code> / <code>password</code>, returns an access token and a refresh token</td>
+</tr>
+<tr>
+<td>2</td>
+<td>GET</td>
+<td><code>/api/data</code></td>
+<td>Bearer</td>
+<td>Note feed (<code>limit</code>, <code>offset</code>, <code>q</code>, <code>category</code>, <code>sort</code>)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>POST</td>
+<td><code>/api/notes</code></td>
+<td>Bearer</td>
+<td><strong>Own method</strong>: create a note</td>
+</tr>
+<tr>
+<td>+</td>
+<td>GET</td>
+<td><code>/api/notes/:id</code></td>
+<td>Bearer</td>
+<td>Read one note</td>
+</tr>
+<tr>
+<td>+</td>
+<td>PATCH</td>
+<td><code>/api/notes/:id</code></td>
+<td>Bearer</td>
+<td>Edit (author or admin only)</td>
+</tr>
+<tr>
+<td>+</td>
+<td>DELETE</td>
+<td><code>/api/notes/:id</code></td>
+<td>Bearer</td>
+<td>Delete (author or admin only)</td>
+</tr>
+<tr>
+<td>+</td>
+<td>POST</td>
+<td><code>/auth/refresh</code></td>
+<td>—</td>
+<td>Rotate the refresh token</td>
+</tr>
+<tr>
+<td>+</td>
+<td>POST</td>
+<td><code>/auth/logout</code></td>
+<td>—</td>
+<td>Revoke the refresh token</td>
+</tr>
+<tr>
+<td>+</td>
+<td>GET</td>
+<td><code>/api/me</code></td>
+<td>Bearer</td>
+<td>Identity + token metadata</td>
+</tr>
+<tr>
+<td>+</td>
+<td>GET</td>
+<td><code>/health</code></td>
+<td>—</td>
+<td>Liveness probe</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-bash">curl -s -X POST http://127.0.0.1:3000/auth/login \
+     -H 'Content-Type: application/json' \
+     -d '{&quot;login&quot;:&quot;alice&quot;,&quot;password&quot;:&quot;Passw0rd!Alice&quot;}'
+</code></pre>
+<pre><code class="language-json">{
+  &quot;access_token&quot;: &quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&quot;,
+  &quot;token_type&quot;: &quot;Bearer&quot;,
+  &quot;expires_in&quot;: 900,
+  &quot;refresh_token&quot;: &quot;8Kx…&quot;,
+  &quot;user&quot;: {&quot;id&quot;: 1, &quot;login&quot;: &quot;alice&quot;, &quot;display_name&quot;: &quot;Alice (course admin)&quot;, &quot;role&quot;: &quot;admin&quot;}
+}
+</code></pre>
+<p>Without a token:</p>
+<pre><code class="language-http">HTTP/1.1 401 Unauthorized
+WWW-Authenticate: Bearer error=&quot;missing_token&quot;
+Content-Type: application/json; charset=utf-8
+
+{&quot;error&quot;:{&quot;code&quot;:&quot;missing_token&quot;,&quot;message&quot;:&quot;Missing or malformed Authorization header (expected \&quot;Bearer &lt;token&gt;\&quot;).&quot;}}
+</code></pre>
+<p><strong>Measured walkthrough</strong> — <code>scripts/run-demo.ps1</code>, 16 checks, all <code>PASS</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Request</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>GET /health</code></td>
+<td>200</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>POST /auth/login</code> (wrong password)</td>
+<td>401</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>POST /auth/login</code> (alice)</td>
+<td>200, JWT + refresh token, <code>expires_in=900</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>GET /api/data</code> without a token</td>
+<td><strong>401 <code>missing_token</code></strong></td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>GET /api/data</code> with a forged token</td>
+<td><strong>401 <code>invalid_token</code></strong></td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>GET /api/data</code> with the real token</td>
+<td>200, <code>total=3</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>POST /api/notes</code></td>
+<td><strong>201</strong>, <code>Location: /api/notes/4</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>PATCH</code> that note as <code>bob</code></td>
+<td><strong>403 forbidden</strong></td>
+</tr>
+<tr>
+<td>9</td>
+<td>login with <code>alice' OR '1'='1</code></td>
+<td><strong>401</strong></td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>GET /api/data?q=' OR 1=1 --</code></td>
+<td>200, <code>total=0</code> (literal text)</td>
+</tr>
+<tr>
+<td>11</td>
+<td>store <code>&lt;script&gt;alert("XSS")&lt;/script&gt;</code></td>
+<td>201, returned as <code>&amp;lt;script&amp;gt;…</code></td>
+</tr>
+<tr>
+<td>12</td>
+<td>refresh, then replay the old token</td>
+<td>200, then <strong>401 <code>token_reuse</code></strong></td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>PATCH</code> + <code>DELETE</code> own note</td>
+<td>200, 204</td>
+</tr>
+<tr>
+<td>14</td>
+<td>six failed logins</td>
+<td><strong>429</strong>, <code>Retry-After: 300</code></td>
+</tr>
+</tbody>
+</table>
+<p><img alt="API walkthrough" src="screenshots/api-demo.png"></p>
+<p><em>Figure 1 — the complete walkthrough. Every line is the response of a real
+request against a real SQLite database.</em></p>
+<h3>3.3 SQL injection</h3>
+<p><strong>Rule 1: every value is a bound parameter.</strong> <code>src/db.js</code> is the only module
+that contains SQL, which makes the rule reviewable in one file:</p>
+<pre><code class="language-js">const user = db.prepare('SELECT * FROM users WHERE login = ? COLLATE NOCASE').get(login);
+</code></pre>
+<p><strong>Rule 2: <code>LIKE</code> needs its own escaping.</strong> A bound parameter stops SQL syntax
+injection, but <code>%</code> and <code>_</code> inside the <em>value</em> are still wildcards. A user
+searching for <code>100%</code> should not receive the whole table, so the term is escaped
+and the statement declares the escape character:</p>
+<pre><code class="language-js">function likePattern(term) {
+  return `%${term.replace(/[\\%_]/g, (char) =&gt; `\\${char}`)}%`;
+}
+// ...
+`(n.title LIKE ? ESCAPE '\\' OR n.body LIKE ? ESCAPE '\\')`
+</code></pre>
+<p><strong>Rule 3: identifiers cannot be parameterised, so they are allow-listed.</strong>
+Sort order comes from the client but never reaches SQL text:</p>
+<pre><code class="language-js">const SORT_CLAUSES = Object.freeze({
+  newest: 'n.created_at DESC, n.id DESC',
+  oldest: 'n.created_at ASC, n.id ASC',
+  title:  'n.title COLLATE NOCASE ASC, n.id ASC',
+});
+const orderBy = SORT_CLAUSES[sort] || SORT_CLAUSES.newest;
+</code></pre>
+<p>Validation rejects anything outside the enum before the repository is called, so
+<code>?sort=id; DROP TABLE notes</code> is a <code>400</code>, not a query.</p>
+<p><strong>Evidence.</strong> <code>tests/notes.test.js</code> sends <code>' OR 1=1 --</code>, <code>' UNION SELECT * FROM
+users --</code> and <code>'; DROP TABLE notes; --</code> to the search endpoint: every one
+returns <code>total=0</code>, and a following assertion checks that the <code>notes</code> table still
+has its rows. The login endpoint refuses the tautology payload with <code>401</code>. A
+separate test searches for <code>%</code> and gets exactly the one note that contains a
+literal percent sign.</p>
+<h3>3.4 Cross-site scripting</h3>
+<p>The database stores text verbatim and the API encodes it <strong>on output</strong> — the
+rule from the OWASP XSS Prevention Cheat Sheet. Encoding on input would corrupt
+the data (and double-encode on the next edit); encoding on output keeps the text
+usable by a JSON client while making it inert for an HTML one.</p>
+<pre><code class="language-js">const HTML_ESCAPES = { '&amp;': '&amp;amp;', '&lt;': '&amp;lt;', '&gt;': '&amp;gt;', '&quot;': '&amp;quot;', &quot;'&quot;: '&amp;#39;', '`': '&amp;#96;' };
+export const escapeHtml = (value) =&gt; String(value).replace(/[&amp;&lt;&gt;&quot;'`]/g, (c) =&gt; HTML_ESCAPES[c]);
+</code></pre>
+<p>Every user-controlled field of a note (<code>title</code>, <code>body</code>, author login and display
+name) passes through <code>escapeHtml</code> in <code>presentNote()</code>; the test stores
+<code>&lt;script&gt;</code>, <code>&lt;img onerror&gt;</code>, <code>&lt;svg onload&gt;</code>, <code>javascript:</code> and <code>&lt;iframe&gt;</code>
+payloads and asserts that none of the raw forms appears in any response, while
+the database still contains the original text (checked directly against SQLite).</p>
+<p>Defence in depth:</p>
+<ul>
+<li><code>Content-Type: application/json</code> and <code>X-Content-Type-Options: nosniff</code>;</li>
+<li><code>Content-Security-Policy: default-src 'none'; frame-ancestors 'none'</code> — even a
+  document that rendered a payload could not execute script;</li>
+<li>validation rejects control characters and caps each field (<code>title</code> 120,
+  <code>body</code> 4000), which also blocks log-injection attempts;</li>
+<li>unknown JSON fields are rejected (<code>.strict()</code>), so a client cannot smuggle
+  <code>author_id</code> or <code>role</code> into a create request.</li>
+</ul>
+<h3>3.5 Authentication</h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Implementation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Never store plaintext</td>
+<td>scrypt, N=2¹⁵, r=8, p=1, 16-byte salt; parameters stored with the hash so the cost can be raised later</td>
+</tr>
+<tr>
+<td>Constant-time check</td>
+<td><code>crypto.timingSafeEqual</code> on the derived keys</td>
+</tr>
+<tr>
+<td>Issue a token</td>
+<td>HS256 JWT: <code>sub</code>, <code>iss</code>, <code>aud</code>, <code>iat</code>, <code>nbf</code>, <code>exp</code>, <code>jti</code>; 15-minute TTL</td>
+</tr>
+<tr>
+<td>Verify on every protected endpoint</td>
+<td><code>makeAuthMiddleware</code> — signature, algorithm, issuer, audience, expiry, <code>sub</code></td>
+</tr>
+<tr>
+<td>Algorithm pinning</td>
+<td><code>algorithms: ['HS256']</code>, which defeats <code>alg: none</code> and RS→HS confusion</td>
+</tr>
+<tr>
+<td>Revocation</td>
+<td>the user is re-read from the database on every request; a deleted account's token dies immediately</td>
+</tr>
+<tr>
+<td>No enumeration</td>
+<td>the same 401 body for unknown user and wrong password, plus a dummy scrypt run to flatten timing</td>
+</tr>
+<tr>
+<td>Brute force</td>
+<td>5 failures per (IP, login) per 5 minutes → <code>429</code> with <code>Retry-After</code></td>
+</tr>
+<tr>
+<td>Refresh</td>
+<td>256-bit opaque token, SHA-256 at rest, rotated on every use; replay revokes the family</td>
+</tr>
+</tbody>
+</table>
+<p>The refresh design deserves a note, because it is where most "JWT + refresh"
+implementations go wrong. A refresh token is not a second JWT: it is an opaque
+random string whose hash is stored in the database. Each use rotates it — the
+old row is marked <code>rotated_at</code>, a new row is inserted in the same <code>family_id</code>.
+If a rotated token is presented again, either the client replayed a request or
+the token was stolen; the server revokes the whole family, so the attacker's
+copy and the victim's session die together:</p>
+<pre><code class="language-js">if (row.rotated_at) {
+  repo.revokeRefreshFamily(row.family_id);
+  throw unauthorized('Refresh token already used; the session was revoked.', 'token_reuse');
+}
+</code></pre>
+<p>Evidence: <code>tests/auth.test.js</code> covers expired tokens, attacker-signed tokens,
+<code>alg: none</code>, a foreign audience, deleted users, lockout and the hash format;
+<code>tests/refresh.test.js</code> covers rotation, reuse detection and logout.</p>
+<h3>3.6 Access control (A01)</h3>
+<p>Every write is checked against the loaded row, not against the token alone:</p>
+<pre><code class="language-js">const existing = repo.getNote(id);
+if (!existing) throw notFound('Note not found.');
+if (!canModifyNote(req.user, existing)) {
+  throw forbidden('Only the author or an administrator may edit this note.');
+}
+</code></pre>
+<p><code>canModifyNote</code> is <code>note.author_id === user.id || user.role === 'admin'</code>, and it
+lives in one place so a new route cannot forget it. The test suite creates a
+third user and asserts that editing another user's note is <code>403</code> while an admin
+can moderate it. A non-numeric id (<code>1 OR 1=1</code>) is a <code>404</code>, not a database error.</p>
+<h3>3.7 Tests</h3>
+<pre><code class="language-bash">npm test                  # 52 tests
+npm run coverage          # 96.7 % lines, 86.0 % branches, 95.2 % functions
+</code></pre>
+<pre><code>tests 52 | suites 6 | pass 52 | fail 0
+all files | 96.73 % lines | 86.00 % branches | 95.18 % functions
+</code></pre>
+<p>Each test file builds its own application with an in-memory database, so tests
+share no state and can run in any order. They exercise the real Express stack
+and the real SQL engine; nothing is mocked except the logger.</p>
+<p><img alt="Test suite" src="screenshots/tests.png"></p>
+<p><em>Figure 2 — the suite, run by <code>node --test</code>.</em></p>
+<h3>3.8 CI/CD with SAST and SCA</h3>
+<p><code>.github/workflows/ci.yml</code> runs on every push and pull request:</p>
+<table>
+<thead>
+<tr>
+<th>Job</th>
+<th>Tool</th>
+<th>What it proves</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test</code></td>
+<td><code>node --test</code>, Node 22 + 24 matrix, coverage</td>
+<td>functional and security regressions pass on both LTS lines</td>
+</tr>
+<tr>
+<td><code>lint</code></td>
+<td>ESLint <code>--max-warnings=0</code></td>
+<td>unused code, obvious bug patterns</td>
+</tr>
+<tr>
+<td><code>sast</code></td>
+<td>ESLint + <code>eslint-plugin-security</code></td>
+<td>no <code>eval</code>, dynamic <code>require</code>, unsafe regex, <code>child_process</code> misuse, …</td>
+</tr>
+<tr>
+<td><code>sca</code></td>
+<td><code>npm audit --audit-level=high</code></td>
+<td>no known vulnerable dependency in the lockfile</td>
+</tr>
+</tbody>
+</table>
+<p>Both scanners write their output to the job summary and upload it as an
+artifact, so a reviewer can see the tool output rather than a green checkmark.</p>
+<p>The same four jobs can be reproduced locally with
+<code>scripts/ci-local.ps1</code> (<code>npm ci</code> is skipped because the tree is already
+installed):</p>
+<pre><code>Job  Exit Status
+test    0 PASS
+lint    0 PASS
+sast    0 PASS
+sca     0 PASS
+RESULT: all 4 jobs passed
+</code></pre>
+<p><img alt="CI jobs" src="screenshots/ci-local.png"></p>
+<p><em>Figure 3 — the four <code>ci.yml</code> jobs executed locally.</em></p>
+<p><img alt="SAST" src="screenshots/sast-eslint.png"></p>
+<p><em>Figure 4 — SAST report: 19 files, 0 errors, 0 warnings.</em></p>
+<p><img alt="SCA" src="screenshots/sca-osv.png"></p>
+<p><em>Figure 5 — SCA report: 190 locked packages, no known vulnerabilities.</em></p>
+<blockquote>
+<p><strong>On the pipeline link.</strong> The screenshots above are a local run of the exact
+commands in <code>ci.yml</code>; the repository has not been pushed from this machine, so
+there is no Actions URL to show yet. After the first push the same four jobs
+run on GitHub — the run URL and an Actions screenshot replace/join Figure 3.
+This is stated here rather than presenting a local run as a GitHub run.</p>
+</blockquote>
+<h3>3.9 Known limitations</h3>
+<ul>
+<li>The rate limiter and the session store are in-process: correct for one
+  instance, but a multi-instance deployment needs Redis (or a shared table) so
+  limits and revocations are global.</li>
+<li>Refresh tokens are stored hashed but not bound to a device; a stolen token that
+  is used <em>before</em> rotation cannot be distinguished from the real client.</li>
+<li>The API has no CORS layer because no browser front end is part of this work.
+  A real deployment needs an explicit allow-list.</li>
+<li>SQLite serialises writes; that is ideal for a lab and wrong for a write-heavy
+  production service.</li>
+</ul>
+<hr>
+<h2>4. Part 2 — CVE-2022-22965 (Spring4Shell)</h2>
+<h3>4.1 Selection</h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CVE</td>
+<td><strong>CVE-2022-22965</strong></td>
+</tr>
+<tr>
+<td>Component</td>
+<td>Spring Framework MVC (data binding), WAR on Tomcat, JDK 9+</td>
+</tr>
+<tr>
+<td>Class</td>
+<td>CWE-94 — Improper Control of Generation of Code ("Code Injection")</td>
+</tr>
+<tr>
+<td>CVSS 3.1</td>
+<td><strong>9.8 CRITICAL</strong> — <code>AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H</code></td>
+</tr>
+<tr>
+<td>Affected</td>
+<td>Spring 5.3.0–5.3.17, 5.2.0–5.2.19</td>
+</tr>
+<tr>
+<td>Fixed in</td>
+<td>Spring 5.3.18 / 5.2.20 (2022-03-31)</td>
+</tr>
+<tr>
+<td>Vulhub</td>
+<td><code>vulhub/spring/CVE-2022-22965</code></td>
+</tr>
+</tbody>
+</table>
+<p>The CVE was chosen because the root cause is a <em>framework design</em> problem
+rather than a missing check in one application, because the exploit is a single
+HTTP request whose effect is unambiguous, and because the fix is a version
+upgrade — exactly the remediation path the lab asks the student to practise.</p>
+<h3>4.2 Vulnerable environment</h3>
+<pre><code class="language-bash">cd cve
+docker compose up -d          # vulhub/spring-webmvc:5.3.17
+</code></pre>
+<p>Inside the container: Spring MVC 5.3.17 packaged as <code>ROOT.war</code>, Tomcat 8.5.77,
+OpenJDK 11. The WAR deployment is not incidental — see §4.4.</p>
+<pre><code class="language-bash">curl -s 'http://127.0.0.1:8080/?name=Bob&amp;age=25'
+# &lt;h2&gt;Hello, my name is Bob, I am 25 years old.&lt;/h2&gt;
+</code></pre>
+<h3>4.3 Reproducing the attack</h3>
+<pre><code class="language-powershell">powershell -ExecutionPolicy Bypass -File .\exploit.ps1
+</code></pre>
+<pre><code>1. Baseline: the application works normally
+   &lt;h2&gt;Hello, my name is Bob, I am 25 years old.&lt;/h2&gt;
+
+2. Exploit: rewrite the Tomcat access-log valve into a JSP webshell
+   HTTP 200
+
+3. Trigger execution through the webshell: /tomcatwar.jsp?pwd=j&amp;cmd=id
+   uid=0(root) gid=0(root) groups=0(root)
+   RCE CONFIRMED — the command output above was produced by the target process
+   --- whoami ---
+   root
+   --- hostname ---
+   fca45319547f
+</code></pre>
+<p><img alt="Exploit" src="screenshots/cve-exploit.png"></p>
+<p><em>Figure 6 — the vulnerable target: baseline, the malicious binding request, and
+command execution through the generated JSP.</em></p>
+<p>The request is a single <code>GET</code> to <code>/</code> with parameters whose <em>names</em> are the
+exploit:</p>
+<pre><code>class.module.classLoader.resources.context.parent.pipeline.first.pattern=&lt;JSP&gt;
+class.module.classLoader.resources.context.parent.pipeline.first.suffix=.jsp
+class.module.classLoader.resources.context.parent.pipeline.first.directory=webapps/ROOT
+class.module.classLoader.resources.context.parent.pipeline.first.prefix=tomcatwar
+class.module.classLoader.resources.context.parent.pipeline.first.fileDateFormat=
+</code></pre>
+<p>plus three headers (<code>c1: Runtime</code>, <code>c2: &lt;%</code>, <code>suffix: %&gt;//</code>) that the log
+pattern expands into JSP source at write time. The path walks the container's
+object graph:</p>
+<pre><code>class → module → classLoader → resources → context → parent → pipeline → first
+  Class    Module   WebappCL    WebRoot     Context    Host      Pipeline  AccessLogValve
+</code></pre>
+<p><code>first</code> is Tomcat's <code>AccessLogValve</code>. Rewriting <code>pattern</code>, <code>directory</code>, <code>prefix</code>
+and <code>suffix</code> makes the next access-log entry a JSP file inside <code>webapps/ROOT</code>;
+the log content is the servlet source, so requesting the file executes it. The
+empty <code>fileDateFormat</code> removes the date stamp from the filename, which is why
+the shell is reachable as <code>/tomcatwar.jsp</code>. Tomcat buffers logged lines
+(128 KiB), which is why the script waits ~10 s before triggering the file.</p>
+<h3>4.4 Root cause</h3>
+<p>Spring MVC binds request parameters to a model attribute:</p>
+<pre><code class="language-java">@RequestMapping(&quot;/&quot;)
+public String hello(Person person, Model model) { ... }
+</code></pre>
+<p>Before 5.3.18, <code>CachedIntrospectionResults</code> exposed the JavaBeans <code>class</code>
+property to that binder. From <code>Class</code> the attacker reaches the JDK 9+ <code>Module</code>,
+its <code>classLoader</code>, Tomcat's web resources, the <code>StandardContext</code>, its parent
+<code>StandardHost</code>, the host pipeline and the first valve. Every step is an ordinary
+public getter; nothing checks whether the <em>request</em> should be allowed to touch
+container internals.</p>
+<p>The defect is therefore a <strong>capability the binder should never have had</strong>, not a
+missing authorisation check in the demo application. Two preconditions narrow
+it: the application must bind a POJO (not <code>@RequestParam</code> individual fields),
+and it must run on Tomcat as a WAR, because <code>resources.context.parent</code> is the
+servlet container's object graph. On JDK 8 the chain is shorter and this exploit
+does not work; a Spring Boot executable jar usually has no configured access-log
+valve, so the published sink is absent (the underlying primitive is still
+considered general by the advisory).</p>
+<p>Impact: arbitrary command execution as the Tomcat process user. In this
+container that user is <code>root</code>, hence <code>uid=0(root)</code>; in a normal deployment it is
+the service account, which still owns the application, its database credentials
+and its files.</p>
+<h3>4.5 The fix</h3>
+<p><code>cve/Dockerfile.fixed</code> rebuilds the same application with the Spring jars
+upgraded to <strong>5.3.18</strong>, the release that makes <code>class.*</code> (and <code>Class.*</code>,
+<code>*.class.*</code>, <code>*.Class.*</code>) non-bindable. The base image has no <code>jar</code> tool, so the
+Dockerfile unpacks <code>ROOT.war</code> into <code>webapps/ROOT</code> and replaces
+<code>WEB-INF/lib/spring-*.jar</code>; Tomcat deploys the exploded directory.</p>
+<pre><code class="language-bash">docker compose down
+docker compose -f docker-compose.fixed.yml up -d --build
+docker exec spring4shell-fixed unzip -p \
+  /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/spring-webmvc-5.3.18.jar \
+  META-INF/MANIFEST.MF | head -5
+</code></pre>
+<p>Why this is the right fix: the change is in <code>CachedIntrospectionResults</code>, so the
+<code>class</code> property is no longer reachable <em>at all</em>. That removes the primitive,
+instead of blocking the one published payload. The advisory's workaround for
+applications that cannot upgrade — an <code>@InitBinder</code> that calls
+<code>setDisallowedFields("class.*", "Class.*", "*.class.*", "*.Class.*")</code> — has to be
+repeated in every controller that binds input, which is why the framework upgrade
+is preferable.</p>
+<p>What is <strong>not</strong> a fix: deleting the webshell (recreated on the next request),
+disabling the access log (loses auditing, keeps the primitive), blocking the
+literal string <code>class.module</code> in a WAF (trivial to vary), or running Tomcat as a
+non-root user (good hardening, but the webshell still executes with the
+application's privileges).</p>
+<h3>4.6 Verifying the fix</h3>
+<pre><code class="language-powershell">powershell -ExecutionPolicy Bypass -File .\verify-fix.ps1
+</code></pre>
+<pre><code>1. Regression: the application still serves normal requests
+GET /?name=Bob&amp;age=25 -&gt; HTTP 200
+[PASS] normal request returns 200 and renders Bob, 25
+
+2. Replay the exploit (Spring 5.3.18 ignores the class.* properties)
+exploit request -&gt; HTTP 200 (200 here means 'ignored', not 'exploited')
+
+3. No webshell was written
+GET /tomcatwar.jsp -&gt; HTTP 404
+[PASS] the JSP webshell does not exist (404)
+[PASS] no *.jsp file in the exploded webroot
+
+4. The access-log valve was not rewritten
+last access-log line: 172.18.0.1 - - [...] &quot;GET /?name=Regression&amp;age=30 HTTP/1.1&quot; 200 92
+[PASS] the access log keeps the default pattern (request line, status, bytes)
+[PASS] the log line does not contain JSP source
+
+5. Binding of normal model properties still works
+[PASS] argument binding for the normal model still works
+
+RESULT: 6 passed, 0 failed
+fix verified - all checks passed
+</code></pre>
+<p><img alt="Fix verified" src="screenshots/cve-fixed.png"></p>
+<p><em>Figure 7 — the patched target: every check passes, including the two that a
+naive test would miss.</em></p>
+<p><strong>Why the verification does not check the status code.</strong> Spring 5.3.18 does not
+answer the malicious request with <code>400</code>; it silently ignores the non-bindable
+properties and returns the normal page (<code>200</code>). A test that asserts "the exploit
+must return 400" would therefore fail on a correctly patched server and would
+tempt someone to "fix" the test instead of the server. The script checks the
+<em>effects</em> instead:</p>
+<ol>
+<li>no <code>tomcatwar.jsp</code> and no <code>.jsp</code> appears in the webroot;</li>
+<li>the access log still has its default pattern, checked from inside the
+   container — i.e. the valve was not rewritten;</li>
+<li>the normal <code>name</code>/<code>age</code> binding still works, which catches a "fix" that
+   simply broke the binder.</li>
+</ol>
+<h3>4.7 Defence in depth</h3>
+<ul>
+<li>Keep Spring and Tomcat patched; treat framework CVEs as dependency work, which
+  is what the SCA job in Part 1 automates.</li>
+<li>Bind to DTOs with explicit fields and use <code>@InitBinder</code> allow-lists
+  (default-deny), not <code>setAllowedFields</code> on a few fields.</li>
+<li>Run the container as an unprivileged user with a read-only webroot.</li>
+<li>Put the application behind a WAF <strong>and</strong> keep it patched — the WAF buys time,
+  it is not the fix.</li>
+<li>Alert on <code>class.module.classLoader</code> in request logs: legitimate clients do not
+  send it.</li>
+</ul>
+<hr>
+<h2>5. Conclusion</h2>
+<p>The two halves of the work meet in the same lesson. Part 1 shows that the
+protections the OWASP Top 10 asks for are implementable in a small service, and
+that each one is testable: a payload either authenticates or it does not, a
+script tag either survives to the client or it does not. Part 2 shows the other
+side of the same coin: a single framework feature can undo an entire
+application's security posture, and the only durable fix is to remove the
+capability, not the payload.</p>
+<p>The most useful concrete finding is the verification trap. After the upgrade,
+the attack request still returns <code>200</code>; only the <em>effects</em> changed. Verifying a
+fix by status code would have declared a patched server vulnerable, and — worse
+— a superficial "fix" (deleting the JSP, disabling the log) would have passed.
+Checking the object graph's behaviour, and re-testing normal functionality,
+distinguishes a fix from a workaround.</p>
+<h3>Mapping to the grading rubric</h3>
+<table>
+<thead>
+<tr>
+<th>Criterion</th>
+<th>Points</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API functionality</td>
+<td>2</td>
+<td>§3.2, Figures 1–2: login, protected feed, create/update/delete, refresh</td>
+</tr>
+<tr>
+<td>SQLi protection</td>
+<td>0.5</td>
+<td>§3.3; <code>tests/notes.test.js</code></td>
+</tr>
+<tr>
+<td>XSS protection</td>
+<td>0.5</td>
+<td>§3.4; escaping tests</td>
+</tr>
+<tr>
+<td>Authentication (JWT + hashing)</td>
+<td>1</td>
+<td>§3.5; <code>tests/auth.test.js</code>, <code>tests/refresh.test.js</code></td>
+</tr>
+<tr>
+<td>CI/CD with SAST/SCA</td>
+<td>2</td>
+<td>§3.8, Figures 3–5; <code>.github/workflows/ci.yml</code></td>
+</tr>
+<tr>
+<td>Vulnerable environment + reproduction</td>
+<td>2</td>
+<td>§4.2–4.3, Figure 6; <code>cve/</code></td>
+</tr>
+<tr>
+<td>Root-cause depth</td>
+<td>1</td>
+<td>§4.4</td>
+</tr>
+<tr>
+<td>Fix + verification</td>
+<td>1</td>
+<td>§4.5–4.6, Figure 7; <code>cve/Dockerfile.fixed</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>6. Control questions</h2>
+<p><strong>1. Why is bcrypt (or scrypt/Argon2) preferable to SHA-256 for passwords?</strong>
+SHA-256 is designed to be fast: a GPU can compute billions of candidates per
+second, so a stolen digest is crackable at scale. bcrypt/scrypt/Argon2 are
+deliberately slow and salted: the salt defeats precomputed rainbow tables, the
+cost factor makes each guess expensive, and scrypt/Argon2 also require memory,
+which hurts GPU and ASIC attackers. This project uses scrypt with N=2¹⁵, r=8,
+p=1 — about 80 ms and 32 MiB per hash, invisible for one login, ruinous for an
+offline attack.</p>
+<p><strong>2. SAST vs DAST?</strong>
+SAST analyses source or bytecode without running the program: it sees every
+branch, runs in CI before deployment, and reports the file and line — but it
+cannot see runtime configuration and produces false positives. DAST attacks a
+running application from outside: it finds real, reachable issues (including
+configuration and authentication problems) but only on the paths it crawls, and
+it cannot say where in the code the defect is. They complement each other; this
+work uses SAST in CI, and the companion DAST work uses ZAP.</p>
+<p><strong>3. How does a JWT work?</strong>
+A JWT is <code>base64url(header).base64url(payload).base64url(signature)</code>. The header
+names the algorithm, the payload carries claims (<code>sub</code>, <code>iss</code>, <code>aud</code>, <code>exp</code>,
+<code>iat</code>, <code>jti</code>), and the signature is an HMAC (HS256) or a public-key signature
+(RS256) over the first two parts. The server verifies the signature with its
+secret (or public key), then checks the claims — issuer, audience, expiry. The
+token is <em>signed, not encrypted</em>: anyone can read the payload, so it must not
+contain secrets. In this project the server also re-reads the user on every
+request, so deleting an account invalidates its token immediately.</p>
+<p><strong>4. What risks come from not auditing third-party dependencies?</strong>
+A project inherits every vulnerability of its dependency tree, including
+transitive packages nobody reviewed. Known CVEs are public and tooling makes
+them cheap to exploit (Spring4Shell is a single request). Without SCA you learn
+about the problem from an incident, not from CI. Auditing also exposes abandoned
+packages, licence conflicts and supply-chain risk (typosquatting, compromised
+maintainer accounts). <code>npm audit</code> in CI and OSV locally are the minimum.</p>
+<p><strong>5. What do Docker and Vulhub add for studying security?</strong>
+Isolation (a deliberately vulnerable service runs on a private network, not on
+the host), reproducibility (image + compose file pin the exact versions), speed
+(a container is destroyed and recreated in seconds, so an RCE can be repeated and
+the fix tested immediately), and safety (no vulnerable software installed on the
+workstation). Vulhub adds a curated, documented set of environments with the
+vulnerable versions and exploitation notes, which removes the setup work and
+leaves the analysis.</p>
+<p><strong>6. Vulnerability vs exploit — what was reproduced here?</strong>
+The vulnerability is the weakness (the binder exposing <code>class.module…</code>); the
+exploit is the concrete sequence that abuses it (the parameter names, the
+headers that build the JSP, the request to the generated file). In this work the
+<em>vulnerability</em> is CVE-2022-22965 in Spring 5.3.17; the <em>exploit</em> is the HTTP
+request and webshell produced by <code>exploit.ps1</code>. Reproducing the exploit proves
+the vulnerability is reachable in this configuration.</p>
+<p><strong>7. Why is regression testing critical after a fix?</strong>
+A patch changes behaviour by definition, and security patches often touch shared
+code. Without a regression check you cannot distinguish "the attack is blocked"
+from "the feature is broken". Here the fix could easily have been implemented by
+disabling model binding or the access log, which would block the exploit and
+break the application. <code>verify-fix.ps1</code> therefore also asserts that
+<code>/?name=Bob&amp;age=25</code> still renders correctly.</p>
+<p><strong>8. Why does CVE knowledge matter for a pentester or a SOC analyst?</strong>
+For a pentester, a CVE gives a known-reachable primitive with public proof and a
+precise version range — the fastest path from "this looks like Spring" to
+"this is exploitable". For a SOC analyst, the same knowledge drives detection:
+the request signature (<code>class.module.classLoader</code>), the post-exploitation
+artefact (a new <code>.jsp</code> in the webroot) and the upgrade timeline. Both roles need
+to reproduce and verify, otherwise they are repeating rumours.</p>
+<hr>
+<h2>7. Submission checklist</h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Public repository with the project</td>
+<td><code>https://github.com/faris-faris-faris/work1-secure-notes-api</code> (after push)</td>
+</tr>
+<tr>
+<td>README with API, security measures, CVE, root cause, fix, proof</td>
+<td><code>README.md</code></td>
+</tr>
+<tr>
+<td>Link to the last successful pipeline run</td>
+<td><code>…/actions</code> (after the first push)</td>
+</tr>
+<tr>
+<td>SAST/SCA screenshots</td>
+<td>Figures 3–5, <code>docs/screenshots/</code></td>
+</tr>
+<tr>
+<td>CVE reproduction with commands and screenshots</td>
+<td>§4.2–4.3, Figure 6</td>
+</tr>
+<tr>
+<td>Root-cause analysis</td>
+<td>§4.4</td>
+</tr>
+<tr>
+<td>Fix and proof of elimination</td>
+<td>§4.5–4.6, Figure 7, <code>cve/Dockerfile.fixed</code></td>
+</tr>
+<tr>
+<td>Folder with the fixes</td>
+<td><code>cve/</code></td>
+</tr>
+<tr>
+<td>Reports (EN + ZH, PDF)</td>
+<td><code>docs/report_en.pdf</code>, <code>docs/report_zh.pdf</code></td>
+</tr>
+<tr>
+<td>Evidence transcripts</td>
+<td><code>docs/evidence/</code></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>The title page carries the student's name (Wu ZiYang) and HDU number
+(23320121); no variant was assigned ("—"). The repository and pipeline URLs
+become live after the first push. See <code>docs/SUBMISSION.md</code>.</p>
+</blockquote>
+</body>
+</html>
