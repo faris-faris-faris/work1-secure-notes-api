@@ -14,7 +14,7 @@ captured with headless Chrome.
 | `sast-eslint.png` | `docs/evidence/sast.txt` | `eslint . -f json` + `scripts/sast-summary.mjs` |
 | `sca-osv.png` | `docs/evidence/sca.txt` | `node scripts/sca-osv.mjs` |
 | `ci-local.png` | `docs/evidence/ci-local.txt` | `scripts/ci-local.ps1` (the four `ci.yml` jobs) |
-| `actions-ci.png` | `docs/evidence/github-actions-run.txt` | browser screenshot of run 40103379944 (headless Chrome) |
+| `actions-ci.png` | `docs/evidence/github-actions-run.txt` | browser screenshot of run 40105508780 (headless Chrome) |
 | `cve-exploit.png` | `docs/evidence/cve-vulnerable.txt` | `cve/exploit.ps1` against `vulhub/spring-webmvc:5.3.17` |
 | `cve-fixed.png` | `docs/evidence/cve-fixed.txt` | `cve/verify-fix.ps1` against the Spring 5.3.18 build |
 
@@ -32,6 +32,6 @@ python scripts/render_png.py docs/evidence/api-demo.txt docs/screenshots/api-dem
 in the README and in both reports. After the repository was pushed, the green
 GitHub run was recorded as text in
 [`../evidence/github-actions-run.txt`](../evidence/github-actions-run.txt):
-run [40103379944](https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40103379944)
+run [40105508780](https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40105508780)
 — `test` (Node 22 and 24), `lint`, `sast` and `sca` all successful. The public
 run URL is on the report title page, in the README and in §7 of the report.

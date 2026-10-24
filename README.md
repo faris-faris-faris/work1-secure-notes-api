@@ -10,7 +10,7 @@ pipeline with SAST and SCA, and a complete study of **CVE-2022-22965
 * Full report: [`docs/report_en.pdf`](docs/report_en.pdf) ·
   [`docs/report_zh.pdf`](docs/report_zh.pdf)
 * Repository: <https://github.com/faris-faris-faris/work1-secure-notes-api>
-* CI pipeline (last successful run): <https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40104034585>
+* CI pipeline (last successful run): <https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40105508780>
 * All workflow runs: <https://github.com/faris-faris-faris/work1-secure-notes-api/actions>
 * Vulnerable-environment study: [`cve/README.md`](cve/README.md)
 
@@ -181,8 +181,8 @@ check directly against SQLite that the original text is still stored.
 
 *Figure 5 — top: all four `ci.yml` jobs executed locally with
 `scripts/ci-local.ps1`. Bottom: the same workflow green on GitHub Actions —
-run [40104034585](https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40104034585)
-on commit `b0c8e9b` passed `test` (Node 22 and 24), `lint`, `sast` and `sca`.
+run [40105508780](https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40105508780)
+on commit `7748614` passed `test` (Node 22 and 24), `lint`, `sast` and `sca`.
 The raw run data is in [`docs/evidence/github-actions-run.txt`](docs/evidence/github-actions-run.txt).*
 
 ## 5. CVE-2022-22965 — Spring4Shell
@@ -294,7 +294,7 @@ Every screenshot has a provenance entry in
 | Item | Link |
 |---|---|
 | Public repository | <https://github.com/faris-faris-faris/work1-secure-notes-api> |
-| Last successful pipeline run | <https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40104034585> |
+| Last successful pipeline run | <https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40105508780> |
 | Reports (EN + ZH) | [`docs/report_en.pdf`](docs/report_en.pdf), [`docs/report_zh.pdf`](docs/report_zh.pdf) |
 | Folder with the fixes | [`cve/`](cve/) |
 | Evidence transcripts | [`docs/evidence/`](docs/evidence/) |

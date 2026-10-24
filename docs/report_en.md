@@ -8,7 +8,7 @@
 > **HDU number**: 23320121<br>
 > **Date**: 2026-10-20<br>
 > **Repository**: `https://github.com/faris-faris-faris/work1-secure-notes-api`<br>
-> **Pipeline**: `https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40104034585`
+> **Pipeline**: `https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40105508780`
 
 ---
 
@@ -322,7 +322,7 @@ RESULT: all 4 jobs passed
 ![CI jobs on GitHub Actions](screenshots/actions-ci.png)
 
 *Figure 3 — the four `ci.yml` jobs: reproduced locally (top) and green on
-GitHub Actions, run 40104034585 on commit `b0c8e9b` (bottom).*
+GitHub Actions, run 40105508780 on commit `7748614` (bottom).*
 
 ![SAST](screenshots/sast-eslint.png)
 
@@ -334,7 +334,7 @@ GitHub Actions, run 40104034585 on commit `b0c8e9b` (bottom).*
 
 > **On the pipeline link.** The top half of Figure 3 is a local run of the exact
 > commands in `ci.yml`; the bottom half is the real GitHub Actions run
-> **40104034585** on commit `b0c8e9b`, where `test` on Node 22 and 24, `lint`,
+> **40105508780** on commit `7748614`, where `test` on Node 22 and 24, `lint`,
 > `sast` and `sca` are all green. The raw run data is recorded in
 > `docs/evidence/github-actions-run.txt`; the consolidated pipeline link is on
 > the title page and in §7.
@@ -675,7 +675,7 @@ to reproduce and verify, otherwise they are repeating rumours.
 |---|---|
 | Public repository with the project | `https://github.com/faris-faris-faris/work1-secure-notes-api` |
 | README with API, security measures, CVE, root cause, fix, proof | `README.md` |
-| Link to the last successful pipeline run | `https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40104034585` |
+| Link to the last successful pipeline run | `https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40105508780` |
 | SAST/SCA screenshots | Figures 3–5, `docs/screenshots/` |
 | CVE reproduction with commands and screenshots | §4.2–4.3, Figure 6 |
 | Root-cause analysis | §4.4 |

@@ -9,8 +9,8 @@ variant was assigned, so the variant field is "—".
 | Item | Value |
 |---|---|
 | Public repository | <https://github.com/faris-faris-faris/work1-secure-notes-api> |
-| Last successful pipeline run | <https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40104034585> |
-| Commit of that run | `b0c8e9b` |
+| Last successful pipeline run | <https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40105508780> |
+| Commit of that run | `7748614` |
 | Jobs | `test` (Node 22), `test` (Node 24), `lint`, `sast`, `sca` — all **success** |
 | Raw run record | [`docs/evidence/github-actions-run.txt`](evidence/github-actions-run.txt) |
 
@@ -25,16 +25,16 @@ git remote add origin https://github.com/faris-faris-faris/work1-secure-notes-ap
 git push -u origin main
 ```
 
-The first run (`40101719130`, commit `f606bc6`) failed the `sca` job on two high
-advisories. They were fixed in commit `154b639`:
+The first CI run failed the `sca` job on two high advisories. They were fixed
+in the `fix:` commit:
 
 * `express` 5.1 → 5.3.0
 * `zod` 3.25 → 4.6.7
 * `overrides: { "body-parser": "2.4.0" }`
 
-`npm audit` now reports 0 vulnerabilities and the 52 tests pass. That commit's
-run (`40103379944`) was green on every job, and so is the later documentation
-commit `b0c8e9b` (run `40104034585`), which is the run linked above.
+`npm audit` now reports 0 vulnerabilities and the 52 tests pass. Every run after
+that fix has been green on every job; the one linked above (`40105508780`) is
+the run for the current `main` (`7748614`).
 
 ## CI evidence
 
@@ -45,7 +45,7 @@ labelled as a local run in the README and in both reports.
 The GitHub run is evidenced by its public run URL and by
 `docs/evidence/github-actions-run.txt`, which contains the API response captured
 after the run: workflow conclusions and the per-job conclusion for
-`40104034585`.
+`40105508780`.
 
 ## Rebuilding the PDFs
 
