@@ -8,7 +8,7 @@
 > **HDU number**: 23320121<br>
 > **Date**: 2026-10-20<br>
 > **Repository**: `https://github.com/faris-faris-faris/work1-secure-notes-api`<br>
-> **Pipeline**: `https://github.com/faris-faris-faris/work1-secure-notes-api/actions`
+> **Pipeline**: `https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40103379944`
 
 ---
 
@@ -317,9 +317,12 @@ sca     0 PASS
 RESULT: all 4 jobs passed
 ```
 
-![CI jobs](screenshots/ci-local.png)
+![CI jobs locally](screenshots/ci-local.png)
 
-*Figure 3 — the four `ci.yml` jobs executed locally.*
+![CI jobs on GitHub Actions](screenshots/actions-ci.png)
+
+*Figure 3 — the four `ci.yml` jobs: reproduced locally (top) and green on
+GitHub Actions, run 40103379944 on commit `154b639` (bottom).*
 
 ![SAST](screenshots/sast-eslint.png)
 
@@ -329,11 +332,12 @@ RESULT: all 4 jobs passed
 
 *Figure 5 — SCA report: 187 locked packages, no known vulnerabilities.*
 
-> **On the pipeline link.** The screenshots above are a local run of the exact
-> commands in `ci.yml`; the repository has not been pushed from this machine, so
-> there is no Actions URL to show yet. After the first push the same four jobs
-> run on GitHub — the run URL and an Actions screenshot replace/join Figure 3.
-> This is stated here rather than presenting a local run as a GitHub run.
+> **On the pipeline link.** The top half of Figure 3 is a local run of the exact
+> commands in `ci.yml`; the bottom half is the real GitHub Actions run
+> **40103379944** on commit `154b639`, where `test` on Node 22 and 24, `lint`,
+> `sast` and `sca` are all green. The raw run data is recorded in
+> `docs/evidence/github-actions-run.txt`; the consolidated pipeline link is on
+> the title page and in §7.
 
 ### 3.9 Known limitations
 
@@ -669,9 +673,9 @@ to reproduce and verify, otherwise they are repeating rumours.
 
 | Item | Where |
 |---|---|
-| Public repository with the project | `https://github.com/faris-faris-faris/work1-secure-notes-api` (after push) |
+| Public repository with the project | `https://github.com/faris-faris-faris/work1-secure-notes-api` |
 | README with API, security measures, CVE, root cause, fix, proof | `README.md` |
-| Link to the last successful pipeline run | `…/actions` (after the first push) |
+| Link to the last successful pipeline run | `https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40103379944` |
 | SAST/SCA screenshots | Figures 3–5, `docs/screenshots/` |
 | CVE reproduction with commands and screenshots | §4.2–4.3, Figure 6 |
 | Root-cause analysis | §4.4 |
@@ -681,5 +685,5 @@ to reproduce and verify, otherwise they are repeating rumours.
 | Evidence transcripts | `docs/evidence/` |
 
 > The title page carries the student's name (Wu ZiYang) and HDU number
-> (23320121); no variant was assigned ("—"). The repository and pipeline URLs
-> become live after the first push. See `docs/SUBMISSION.md`.
+> (23320121); no variant was assigned ("—"). The repository is public and the
+> pipeline run above is the last successful one.

@@ -10,7 +10,8 @@ pipeline with SAST and SCA, and a complete study of **CVE-2022-22965
 * Full report: [`docs/report_en.pdf`](docs/report_en.pdf) ·
   [`docs/report_zh.pdf`](docs/report_zh.pdf)
 * Repository: <https://github.com/faris-faris-faris/work1-secure-notes-api>
-* CI pipeline: <https://github.com/faris-faris-faris/work1-secure-notes-api/actions>
+* CI pipeline (last successful run): <https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40103379944>
+* All workflow runs: <https://github.com/faris-faris-faris/work1-secure-notes-api/actions>
 * Vulnerable-environment study: [`cve/README.md`](cve/README.md)
 
 | Item | Value |
@@ -176,9 +177,13 @@ check directly against SQLite that the original text is still stored.
 
 ![Local CI run](docs/screenshots/ci-local.png)
 
-*Figure 5 — all four `ci.yml` jobs executed locally with `scripts/ci-local.ps1`.
-This is a local run of the same commands, not a GitHub Actions screenshot; after
-the first push the Actions run URL and a green-run screenshot are added.*
+![GitHub Actions run](docs/screenshots/actions-ci.png)
+
+*Figure 5 — top: all four `ci.yml` jobs executed locally with
+`scripts/ci-local.ps1`. Bottom: the same workflow green on GitHub Actions —
+run [40103379944](https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40103379944)
+on commit `154b639` passed `test` (Node 22 and 24), `lint`, `sast` and `sca`.
+The raw run data is in [`docs/evidence/github-actions-run.txt`](docs/evidence/github-actions-run.txt).*
 
 ## 5. CVE-2022-22965 — Spring4Shell
 
@@ -289,7 +294,7 @@ Every screenshot has a provenance entry in
 | Item | Link |
 |---|---|
 | Public repository | <https://github.com/faris-faris-faris/work1-secure-notes-api> |
-| Last successful pipeline run | <https://github.com/faris-faris-faris/work1-secure-notes-api/actions> |
+| Last successful pipeline run | <https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40103379944> |
 | Reports (EN + ZH) | [`docs/report_en.pdf`](docs/report_en.pdf), [`docs/report_zh.pdf`](docs/report_zh.pdf) |
 | Folder with the fixes | [`cve/`](cve/) |
 | Evidence transcripts | [`docs/evidence/`](docs/evidence/) |

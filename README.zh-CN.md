@@ -85,11 +85,12 @@ docs/           中英文报告（md/html/pdf）、证据记录、截图、提�
 .github/        ci.yml（test / lint / sast / sca）
 ```
 
-## 提交前需要填写
+## 提交信息
 
 报告封面已填写姓名 **Wu ZiYang** 与 HDU 学号 **23320121**；变体号未分配（—）。
-仓库与流水线链接在首次推送前尚未生效，推送步骤见
-[`docs/SUBMISSION.md`](docs/SUBMISSION.md)。
+仓库已公开，最近一次成功流水线：
+<https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40103379944>
+（提交 `154b639`，test/lint/sast/sca 全部通过）。
 
 ## 参考
 

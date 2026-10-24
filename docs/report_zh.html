@@ -73,7 +73,7 @@ hr { border: none; border-top: 1px solid #dde3ea; margin: 1.4em 0; }
 <strong>HDU 学号</strong>：23320121<br>
 <strong>日期</strong>：2026-10-20<br>
 <strong>代码仓库</strong>：<code>https://github.com/faris-faris-faris/work1-secure-notes-api</code><br>
-<strong>流水线</strong>：<code>https://github.com/faris-faris-faris/work1-secure-notes-api/actions</code></p>
+<strong>流水线</strong>：<code>https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40103379944</code></p>
 </blockquote>
 <hr>
 <h2>1. 实验目的</h2>
@@ -535,17 +535,19 @@ sast    0 PASS
 sca     0 PASS
 RESULT: all 4 jobs passed
 </code></pre>
-<p><img alt="CI 四个 job" src="screenshots/ci-local.png"></p>
-<p><em>图 3 — 在本机执行 <code>ci.yml</code> 中的四个 job。</em></p>
+<p><img alt="CI 四个 job（本地）" src="screenshots/ci-local.png"></p>
+<p><img alt="CI 四个 job（GitHub Actions）" src="screenshots/actions-ci.png"></p>
+<p><em>图 3 — <code>ci.yml</code> 的四个 job：本机复现（上）与 GitHub Actions 上的全部通过
+（下，运行 40103379944，提交 <code>154b639</code>）。</em></p>
 <p><img alt="SAST 报告" src="screenshots/sast-eslint.png"></p>
 <p><em>图 4 — SAST 报告：分析 19 个文件，0 错误、0 警告。</em></p>
 <p><img alt="SCA 报告" src="screenshots/sca-osv.png"></p>
 <p><em>图 5 — SCA 报告：187 个锁定依赖，无已知漏洞。</em></p>
 <blockquote>
-<p><strong>关于流水线链接。</strong> 上述截图是在本机执行 <code>ci.yml</code> 中完全相同命令的真实结果；
-仓库尚未从这台机器推送，因此暂时没有 Actions 运行链接。首次推送后，同样的四个
-job 会在 GitHub 上运行，运行链接与 Actions 截图将补充/替换图 3。这里明确说明，
-而不是把本地运行伪装成 GitHub 运行。</p>
+<p><strong>关于流水线链接。</strong> 图 3 上半部分是本机执行 <code>ci.yml</code> 中完全相同命令的结果，
+下半部分是真实的 GitHub Actions 运行 <strong>40103379944</strong>（提交 <code>154b639</code>），
+<code>test</code>（Node 22 与 24）、<code>lint</code>、<code>sast</code>、<code>sca</code> 全部通过。原始运行数据记录在
+<code>docs/evidence/github-actions-run.txt</code>；汇总后的流水线链接见封面与第 7 节。</p>
 </blockquote>
 <h3>3.9 已知局限</h3>
 <ul>
@@ -842,7 +844,7 @@ Spring”到“可被利用”的最短路径。对 SOC 分析师，同样的知
 <tbody>
 <tr>
 <td>公开代码仓库</td>
-<td><code>https://github.com/faris-faris-faris/work1-secure-notes-api</code>（推送后生效）</td>
+<td><code>https://github.com/faris-faris-faris/work1-secure-notes-api</code></td>
 </tr>
 <tr>
 <td>含 API、安全措施、CVE、根因、修复与证据的 README</td>
@@ -850,7 +852,7 @@ Spring”到“可被利用”的最短路径。对 SOC 分析师，同样的知
 </tr>
 <tr>
 <td>最近一次成功流水线链接</td>
-<td><code>…/actions</code>（首次推送后）</td>
+<td><code>https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40103379944</code></td>
 </tr>
 <tr>
 <td>SAST/SCA 截图</td>
@@ -884,7 +886,7 @@ Spring”到“可被利用”的最短路径。对 SOC 分析师，同样的知
 </table>
 <blockquote>
 <p>封面已填写姓名（Wu ZiYang）与 HDU 学号（23320121）；变体号未分配（—）。
-仓库与流水线链接在首次推送后生效，具体步骤见 <code>docs/SUBMISSION.md</code>。</p>
+仓库已公开，上面的流水线即最近一次成功运行。</p>
 </blockquote>
 </body>
 </html>

@@ -8,7 +8,7 @@
 > **HDU 学号**：23320121<br>
 > **日期**：2026-10-20<br>
 > **代码仓库**：`https://github.com/faris-faris-faris/work1-secure-notes-api`<br>
-> **流水线**：`https://github.com/faris-faris-faris/work1-secure-notes-api/actions`
+> **流水线**：`https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40103379944`
 
 ---
 
@@ -302,9 +302,12 @@ sca     0 PASS
 RESULT: all 4 jobs passed
 ```
 
-![CI 四个 job](screenshots/ci-local.png)
+![CI 四个 job（本地）](screenshots/ci-local.png)
 
-*图 3 — 在本机执行 `ci.yml` 中的四个 job。*
+![CI 四个 job（GitHub Actions）](screenshots/actions-ci.png)
+
+*图 3 — `ci.yml` 的四个 job：本机复现（上）与 GitHub Actions 上的全部通过
+（下，运行 40103379944，提交 `154b639`）。*
 
 ![SAST 报告](screenshots/sast-eslint.png)
 
@@ -314,10 +317,10 @@ RESULT: all 4 jobs passed
 
 *图 5 — SCA 报告：187 个锁定依赖，无已知漏洞。*
 
-> **关于流水线链接。** 上述截图是在本机执行 `ci.yml` 中完全相同命令的真实结果；
-> 仓库尚未从这台机器推送，因此暂时没有 Actions 运行链接。首次推送后，同样的四个
-> job 会在 GitHub 上运行，运行链接与 Actions 截图将补充/替换图 3。这里明确说明，
-> 而不是把本地运行伪装成 GitHub 运行。
+> **关于流水线链接。** 图 3 上半部分是本机执行 `ci.yml` 中完全相同命令的结果，
+> 下半部分是真实的 GitHub Actions 运行 **40103379944**（提交 `154b639`），
+> `test`（Node 22 与 24）、`lint`、`sast`、`sca` 全部通过。原始运行数据记录在
+> `docs/evidence/github-actions-run.txt`；汇总后的流水线链接见封面与第 7 节。
 
 ### 3.9 已知局限
 
@@ -599,9 +602,9 @@ Spring”到“可被利用”的最短路径。对 SOC 分析师，同样的知
 
 | 项目 | 位置 |
 |---|---|
-| 公开代码仓库 | `https://github.com/faris-faris-faris/work1-secure-notes-api`（推送后生效） |
+| 公开代码仓库 | `https://github.com/faris-faris-faris/work1-secure-notes-api` |
 | 含 API、安全措施、CVE、根因、修复与证据的 README | `README.md` |
-| 最近一次成功流水线链接 | `…/actions`（首次推送后） |
+| 最近一次成功流水线链接 | `https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40103379944` |
 | SAST/SCA 截图 | 图 3–5，`docs/screenshots/` |
 | CVE 复现命令与截图 | 4.2–4.3 节、图 6 |
 | 根本原因分析 | 4.4 节 |
@@ -611,4 +614,4 @@ Spring”到“可被利用”的最短路径。对 SOC 分析师，同样的知
 | 证据原始记录 | `docs/evidence/` |
 
 > 封面已填写姓名（Wu ZiYang）与 HDU 学号（23320121）；变体号未分配（—）。
-> 仓库与流水线链接在首次推送后生效，具体步骤见 `docs/SUBMISSION.md`。
+> 仓库已公开，上面的流水线即最近一次成功运行。

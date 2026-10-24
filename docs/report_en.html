@@ -73,7 +73,7 @@ hr { border: none; border-top: 1px solid #dde3ea; margin: 1.4em 0; }
 <strong>HDU number</strong>: 23320121<br>
 <strong>Date</strong>: 2026-10-20<br>
 <strong>Repository</strong>: <code>https://github.com/faris-faris-faris/work1-secure-notes-api</code><br>
-<strong>Pipeline</strong>: <code>https://github.com/faris-faris-faris/work1-secure-notes-api/actions</code></p>
+<strong>Pipeline</strong>: <code>https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40103379944</code></p>
 </blockquote>
 <hr>
 <h2>1. Purpose</h2>
@@ -551,18 +551,21 @@ sast    0 PASS
 sca     0 PASS
 RESULT: all 4 jobs passed
 </code></pre>
-<p><img alt="CI jobs" src="screenshots/ci-local.png"></p>
-<p><em>Figure 3 — the four <code>ci.yml</code> jobs executed locally.</em></p>
+<p><img alt="CI jobs locally" src="screenshots/ci-local.png"></p>
+<p><img alt="CI jobs on GitHub Actions" src="screenshots/actions-ci.png"></p>
+<p><em>Figure 3 — the four <code>ci.yml</code> jobs: reproduced locally (top) and green on
+GitHub Actions, run 40103379944 on commit <code>154b639</code> (bottom).</em></p>
 <p><img alt="SAST" src="screenshots/sast-eslint.png"></p>
 <p><em>Figure 4 — SAST report: 19 files, 0 errors, 0 warnings.</em></p>
 <p><img alt="SCA" src="screenshots/sca-osv.png"></p>
 <p><em>Figure 5 — SCA report: 187 locked packages, no known vulnerabilities.</em></p>
 <blockquote>
-<p><strong>On the pipeline link.</strong> The screenshots above are a local run of the exact
-commands in <code>ci.yml</code>; the repository has not been pushed from this machine, so
-there is no Actions URL to show yet. After the first push the same four jobs
-run on GitHub — the run URL and an Actions screenshot replace/join Figure 3.
-This is stated here rather than presenting a local run as a GitHub run.</p>
+<p><strong>On the pipeline link.</strong> The top half of Figure 3 is a local run of the exact
+commands in <code>ci.yml</code>; the bottom half is the real GitHub Actions run
+<strong>40103379944</strong> on commit <code>154b639</code>, where <code>test</code> on Node 22 and 24, <code>lint</code>,
+<code>sast</code> and <code>sca</code> are all green. The raw run data is recorded in
+<code>docs/evidence/github-actions-run.txt</code>; the consolidated pipeline link is on
+the title page and in §7.</p>
 </blockquote>
 <h3>3.9 Known limitations</h3>
 <ul>
@@ -913,7 +916,7 @@ to reproduce and verify, otherwise they are repeating rumours.</p>
 <tbody>
 <tr>
 <td>Public repository with the project</td>
-<td><code>https://github.com/faris-faris-faris/work1-secure-notes-api</code> (after push)</td>
+<td><code>https://github.com/faris-faris-faris/work1-secure-notes-api</code></td>
 </tr>
 <tr>
 <td>README with API, security measures, CVE, root cause, fix, proof</td>
@@ -921,7 +924,7 @@ to reproduce and verify, otherwise they are repeating rumours.</p>
 </tr>
 <tr>
 <td>Link to the last successful pipeline run</td>
-<td><code>…/actions</code> (after the first push)</td>
+<td><code>https://github.com/faris-faris-faris/work1-secure-notes-api/actions/runs/40103379944</code></td>
 </tr>
 <tr>
 <td>SAST/SCA screenshots</td>
@@ -955,8 +958,8 @@ to reproduce and verify, otherwise they are repeating rumours.</p>
 </table>
 <blockquote>
 <p>The title page carries the student's name (Wu ZiYang) and HDU number
-(23320121); no variant was assigned ("—"). The repository and pipeline URLs
-become live after the first push. See <code>docs/SUBMISSION.md</code>.</p>
+(23320121); no variant was assigned ("—"). The repository is public and the
+pipeline run above is the last successful one.</p>
 </blockquote>
 </body>
 </html>
